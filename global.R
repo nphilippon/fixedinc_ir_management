@@ -43,4 +43,5 @@ get_treasury_data <- function(symbols) {
   return(clean_data)
 }
 
+# Pull data on launch
 treasury_yields <- get_treasury_data(treasury_symbols)

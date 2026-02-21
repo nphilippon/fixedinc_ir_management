@@ -1,5 +1,5 @@
 library(shiny)
-
+library(bslib)
 
 
 
@@ -21,9 +21,48 @@ dashboardPage(
               )
       ),
       tabItem(tabName = "builder",
-              fluidPage(
-                titlePanel("Build Your Portfolio"))
-              
+              sidebarLayout(
+                sidebarPanel(
+                  numericInput("build_quantity",
+                               "Quantity",
+                               value = 0,
+                               min = 0),
+                  selectInput("build_note",
+                              "Treasury Note",
+                              choices = treasury_symbols),
+                  numericInput("build_coupon",
+                               "Coupon %",
+                               value = 0,
+                               min = 0,
+                               max = 100,
+                               step = 0.5),
+                  numericInput("build_ttm",
+                               "Bond TTM (in years",
+                               value = 0,
+                               min = 0), #may be redundant
+                  numericInput("build_n",
+                               "Coupon Periods Yearly",
+                               value = 1,
+                               min = 1,
+                               step = 1),
+                  textOutput("build_bond_price")
+                  
+                ),
+                mainPanel(
+                  
+                  "Hello World"
+                  
+                )
+                
+                
+                
+                
               )
-      ))
+              
+            )
+          )
+        )
   )
+      
+  
+

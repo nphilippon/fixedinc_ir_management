@@ -1,0 +1,39 @@
+---
+title: "Tester"
+format: html
+editor: visual
+---
+
+```{r}
+
+library(quantmod)
+library(tidyquant)
+library(RTL)
+library(tidyverse)
+
+
+treasury_symbols <- c(
+  "1-Month"  = "DGS1MO",
+  "3-Month"  = "DGS3MO",
+  "6-Month"  = "DGS6MO",
+  "1-Year"   = "DGS1",
+  "2-Year"   = "DGS2",
+  "3-Year"   = "DGS3",
+  "5-Year"   = "DGS5",
+  "7-Year"   = "DGS7",
+  "10-Year"  = "DGS10",
+  "20-Year"  = "DGS20",
+  "30-Year"  = "DGS30")
+
+
+
+
+tester <- tidyquant::tq_get(treasury_symbols[1],
+                  get = "economic.data",
+                  from = "2026-01-01")
+
+
+tester$price %>% tail(1)
+
+
+```

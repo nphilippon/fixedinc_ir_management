@@ -23,30 +23,40 @@ dashboardPage(
       tabItem(tabName = "builder",
               sidebarLayout(
                 sidebarPanel(
-                  numericInput("build_quantity",
-                               "Quantity",
-                               value = 0,
-                               min = 0),
-                  selectInput("build_note",
-                              "Treasury Note",
-                              choices = treasury_symbols),
+                  dateInput(inputId = "start_date",
+                            label = "Date of First Payment",
+                            value = NULL,
+                            min = "1624-12-10", #date of the oldest active bond, issued by Hoogheemraadschap Lekdijk Bovendams
+                            max = NULL,
+                            startview = "month"
+                            ),
+                  dateInput(inputId = "end_date",
+                            label = "Date of Last Payment",
+                            value = NULL,
+                            startview = "month"
+                            ),
                   numericInput("build_coupon",
-                               "Coupon %",
+                               "Coupon Rate (%)",
                                value = 0,
                                min = 0,
                                max = 100,
-                               step = 0.5),
-                  numericInput("build_ttm",
-                               "Bond TTM (in years",
+                               step = 0.01),
+                  numericInput("T2M",
+                               "Time to Maturity (Years)",
                                value = 0,
                                min = 0), #may be redundant
-                  numericInput("build_n",
-                               "Coupon Periods Yearly",
+                  numericInput("periodicity",
+                               "Coupons Per Year",
                                value = 1,
                                min = 1,
                                step = 1),
-                  textOutput("build_bond_price")
-                  
+                  numericInput(inputId = "FV",
+                               label = "Face Value of 1 Bond",
+                               value = 100000),
+                  numericInput("quantity",
+                               "Quantity of Bonds",
+                               value = 0,
+                               min = 0)
                 ),
                 mainPanel(
                   

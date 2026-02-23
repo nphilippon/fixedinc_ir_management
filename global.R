@@ -4,6 +4,7 @@ library(quantmod)
 library(tidyverse)
 library(tidyquant)
 library(DT)
+library(RTL)
 
 # FRED US Treasury Symbols
 treasury_symbols <- c(

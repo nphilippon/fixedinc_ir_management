@@ -4,6 +4,7 @@ library(quantmod)
 library(tidyverse)
 library(tidyquant)
 library(DT)
+library(RTL)
 
 # FRED US Treasury Symbols
 treasury_symbols <- c(
@@ -44,6 +45,7 @@ get_treasury_data <- function(symbols) {
 }
 
 # Pull data on launch
+<<<<<<< HEAD
 treasury_yields <- get_treasury_data(treasury_symbols)
 
 
@@ -102,3 +104,6 @@ bond_cf <- function(start_date, end_date = NA, c, T2M = 0, periodicity = 2, FV, 
   
   return(output_df)
 }
+=======
+treasury_yields <- get_treasury_data(treasury_symbols)
+>>>>>>> refs/remotes/origin/main

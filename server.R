@@ -20,12 +20,33 @@ function(input, output, session) {
     
     # Convert into long df with cols date, tenor, yield for chart
     plot_data <- treasury_yields %>% 
-      pivot_longer(cols = -date, names_to = "Tenor", values_to = "Yield")
+      pivot_longer(cols = -date, names_to = "Tenor", values_to = "Yield") %>%
+      mutate(
+        # Converts Tenor to a factor in order of maturity (for legend ordering)
+        Tenor = factor(Tenor, levels = names(treasury_symbols)),
+        # Converts Yield to actual % (for proper axis)
+        Yield = Yield/100) 
     
     # Makes plotly line chart (Will format later)
     plot_ly(plot_data, x = ~date, y = ~Yield, color = ~Tenor,
-            type = 'scatter', mode = 'lines')
-    
+            type = 'scatter', mode = 'lines') %>%
+      layout(
+        xaxis = list(
+          # Adds date range selector buttons
+          rangeselector = list(
+            buttons = list(
+              list(count = 3, label = "3Mo", step = "month", stepmode = "backward"),
+              list(count = 6, label = "6Mo", step = "month", stepmode = "backward"),
+              list(count = 1, label = "1Yr", step = "year", stepmode = "backward"),
+              list(count = 2, label = "2Yr", step = "year", stepmode = "backward"),
+              list(count = 5, label = "5Yr", step = "year", stepmode = "backward"),
+              list(count = 10, label = "10Yr", step = "year", stepmode = "backward"),
+              list(count = 1, label = "YTD", step = "year", stepmode = "todate"),
+              list(step = "all")))),
+        yaxis = list(
+          # Format as %X.XX
+          tickformat = ".2%")
+      )
   })
   
   output$build_bond_price <- renderText({

@@ -5,6 +5,7 @@ library(tidyverse)
 library(tidyquant)
 library(DT)
 library(RTL)
+library(plotly)
 
 # FRED US Treasury Symbols (name = readable clean tenor, character = FRED symbol)
 treasury_symbols <- c(

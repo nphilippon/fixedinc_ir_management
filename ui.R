@@ -2,7 +2,6 @@ library(shiny)
 library(bslib)
 
 
-
 dashboardPage(
   dashboardHeader(title = "IR App"),
   # Icon Options Here: https://fontawesome.com/  
@@ -16,7 +15,11 @@ dashboardPage(
     tabItems(
       tabItem(tabName = "data",
               fluidRow(
-                box(width = 12, title = "Treasury Yield Data", status = "info",
+                box(width = 12, title = "Historical Treasury Yields", status = "primary",
+                    plotlyOutput("hist_yield_chart", height = "400px"))
+              ),
+              fluidRow(
+                box(width = 12, title = "Daily Treasury Yield Data", status = "info",
                     DTOutput("yieldTable"))
               )
       ),

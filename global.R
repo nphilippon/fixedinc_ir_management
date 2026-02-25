@@ -6,7 +6,7 @@ library(tidyquant)
 library(DT)
 library(RTL)
 
-# FRED US Treasury Symbols
+# FRED US Treasury Symbols (name = readable clean tenor, character = FRED symbol)
 treasury_symbols <- c(
   "1-Month"  = "DGS1MO",
   "3-Month"  = "DGS3MO",
@@ -20,26 +20,32 @@ treasury_symbols <- c(
   "20-Year"  = "DGS20",
   "30-Year"  = "DGS30")
 
-# Get FRED data
+# Function for getting and cleaning FRED data using Tidyquant
 get_treasury_data <- function(symbols) {
-  # Get data using tidyquant
   raw_data <- symbols %>% 
+    # Only search for FRED symbol
     as.character() %>% 
     set_names() %>% 
-    map_df(~tq_get(.x, get = "economic.data", from = "1992-01-01"), .id = "symbol")
+    # Loops through all symbols and gets data from 1992-01-02 on, because no data for 1992-01-01
+    # returns as long df with added col for corresponding symbol
+    # (This does take awhile, there might be a better way to do it? Or FRED API is just slow)
+    map_df(~tq_get(.x, get = "economic.data", from = "1992-01-02"), .id = "symbol")
   
-  # Map FRED symbols to clean names
+  # Makes Map tibble for converting FRED symbols to clean names
   symbol_map <- tibble(
     symbol = as.character(symbols),
     tenor = names(symbols)
   )
   
-  # Convert to wide df
+  # Joins raw data with clean name map and converts to wide df of yields by date for each tenor
   clean_data <- raw_data %>% 
     left_join(symbol_map, by = "symbol") %>% 
     select(date, tenor, price) %>% 
     pivot_wider(names_from = tenor, values_from = price) %>% 
-    arrange(desc(date))
+    # Sorts by date descending
+    arrange(desc(date)) %>% 
+    # Fills missing dates with last available
+    fill(everything(), .direction = "up")
   
   return(clean_data)
 }

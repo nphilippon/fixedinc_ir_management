@@ -7,7 +7,7 @@ dashboardPage(
   # Icon Options Here: https://fontawesome.com/  
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Raw Data", tabName = "data", icon = icon("table")),
+      menuItem("US Treasury Yield Data", tabName = "data", icon = icon("table")),
       menuItem("Portfolio Builder", tabName = "builder", icon = icon("wrench"))
     )
   ),

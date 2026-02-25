@@ -27,10 +27,12 @@ function(input, output, session) {
         # Converts Yield to actual % (for proper axis)
         Yield = Yield/100) 
     
-    # Makes plotly line chart (Will format later)
+    # Makes plotly line chart
     plot_ly(plot_data, x = ~date, y = ~Yield, color = ~Tenor,
             type = 'scatter', mode = 'lines') %>%
       layout(
+        # Adds hover info for all tenors on that date
+        hovermode = "x unified",
         xaxis = list(
           # Adds date range selector buttons
           rangeselector = list(
@@ -42,10 +44,23 @@ function(input, output, session) {
               list(count = 5, label = "5Yr", step = "year", stepmode = "backward"),
               list(count = 10, label = "10Yr", step = "year", stepmode = "backward"),
               list(count = 1, label = "YTD", step = "year", stepmode = "todate"),
-              list(step = "all")))),
+              list(label = "All", step = "all"))),
+          title = "Date",
+          # Removes gridlines
+          showgrid = FALSE,
+          # Adds tick marks
+          ticks = "outside",
+          # Makes hover title show full date
+          hoverformat = "%b %d, %Y"),
         yaxis = list(
           # Format as %X.XX
-          tickformat = ".2%")
+          tickformat = ".2%",
+          # Removes gridlines
+          showgrid = FALSE,
+          # Adds axis line with tick marks every 1%
+          showline = TRUE, ticks = "outside", dtick = 0.01,
+          # Sets min y-axis to 0 and adds line
+          rangemode = "tozero", zeroline = TRUE)
       )
   })
   

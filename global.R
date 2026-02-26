@@ -115,6 +115,7 @@ bond_cf <- function(start_date, end_date = NA, c, T2M = 0, periodicity = 2, FV, 
 get_bond_ttm <- function(settlement_date, maturity_date) {
   # settlement_date: date of bond ownership transfer
   # maturity_date: maturity date of bond
+  
   ttm <- as.numeric(difftime(maturity_date, settlement_date, units = "days")) / 365
   
   return(ttm)
@@ -172,10 +173,12 @@ get_bond_metrics <- function(ttm, FV = 100, yield, c, periodicity = 2) {
   price_plus <- get_bond_price(yield + step_size)
   price_minus <- get_bond_price(yield - step_size)
   
+  # Calculate Delta Approximation
+  delta_approx = (price_plus - price_minus) / (2 * step_size) / 10000
+  # Calculate Gamma Approximation
+  gamma_approx = 0.5 * ((price_plus - 2 * bond_price + price_minus) / step_size^2) / 10000^2
   
   return(list(
-    n_pmt_periods = n_pmt_periods,
-    pmt_times = pmt_times,
     c_pmt = c_pmt,
     cashflows = cashflows,
     pv_cashflows = pv_cashflows,
@@ -184,7 +187,9 @@ get_bond_metrics <- function(ttm, FV = 100, yield, c, periodicity = 2) {
     modified_duration = modified_duration,
     convexity = convexity,
     price_plus = price_plus,
-    price_minus = price_minus))
+    price_minus = price_minus,
+    delta_approx = delta_approx,
+    gamma_approx = gamma_approx))
 }
 
 # Testing functions

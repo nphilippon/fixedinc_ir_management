@@ -54,7 +54,7 @@ get_treasury_data <- function(symbols) {
 # Pull data on launch
 treasury_yields <- get_treasury_data(treasury_symbols)
 
-
+# NOTE: CF function does not work properly rn, payments are made every 2 years instead of semi-annual
 # Create bond
 bond_cf <- function(start_date, end_date = NA, c, T2M = 0, periodicity = 2, FV, quantity = 1) {
   # Start_date: beginning date for the bond, the inception and first payment date (CRITICAL)
@@ -111,4 +111,61 @@ bond_cf <- function(start_date, end_date = NA, c, T2M = 0, periodicity = 2, FV, 
   return(output_df)
 }
 
+# Function for calculating bond metrics
+bond_metrics <- function(settlement_date, maturity_date, FV = 100, yield, c, periodicity = 2) {
+  # settlement_date: date of bond ownership transfer
+  # maturity_date: maturity date of bond,
+  # FV: face/par value of bond (defaults to 100)
+  # yield: yield of bond (decimal format)
+  # c: coupon rate of bond (decimal format)
+  # periodicity: coupon payment frequency (defaults to 2, semi-annual)
+  
+  # Calculate Time To Maturity in years
+  ttm <- as.numeric(difftime(maturity_date, settlement_date, units = "days")) / 365
+  
+  # Calculate # of payment periods remaining
+  n_pmt_periods <- floor(ttm * periodicity)
+  
+  # Calculate time of each coupon payment (in years from settlement date)
+  pmt_times <- seq(from = 1/periodicity, length.out = n_pmt_periods, by = 1/periodicity)
+  # Set last payment to maturity date
+  pmt_times[length(pmt_times)] <- ttm
+  
+  # Calculate Coupon payment
+  c_pmt <- (FV * c)/periodicity
+  # Generate Cash Flow stream
+  cashflows <- rep(c_pmt, length(pmt_times))
+  # Add final bond redemption cash flow
+  cashflows[length(cashflows)] <- cashflows[length(cashflows)] + FV
+  
+  # Calculate PV of cash flows
+  pv_cashflows <- cashflows * (1/ (1 + yield/periodicity)^(periodicity * pmt_times))
+  # Calculate bond price (sum of cash flow PVs)
+  bond_price <- sum(pv_cashflows)
+  
+  # Calculate Macaulay Duration
+  macaulay_duration <- sum(pmt_times * pv_cashflows) / bond_price
+  # Calculate Modified Duration
+  modified_duration <- macaulay_duration / (1 + yield/periodicity)
+  
+  # Calculate Convexity
+  # WIP
+  
+  return(list(
+    ttm = ttm,
+    n_pmt_periods = n_pmt_periods,
+    pmt_times = pmt_times,
+    c_pmt = c_pmt,
+    cashflows = cashflows,
+    pv_cashflows = pv_cashflows,
+    bond_price = bond_price,
+    macaulay_duration = macaulay_duration,
+    modified_duration = modified_duration))
+}
+
+# Testing functions
+test_bond_metrics <- bond_metrics(settlement_date = "2020-01-01", maturity_date = "2026-01-01", yield = 0.05, c = 0.08)
+test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", c = 0.05, FV = 100)
+
+# Pull US Treasury data on startup 
 treasury_yields <- get_treasury_data(treasury_symbols)

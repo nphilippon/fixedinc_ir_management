@@ -149,7 +149,7 @@ bond_metrics <- function(settlement_date, maturity_date, FV = 100, yield, c, per
   modified_duration <- macaulay_duration / (1 + yield/periodicity)
   
   # Calculate Convexity
-  # WIP
+  convexity <- sum(pmt_times * (pmt_times + 1/periodicity) * pv_cashflows) / (bond_price * (1 + yield / periodicity)^2)
   
   return(list(
     ttm = ttm,
@@ -160,11 +160,12 @@ bond_metrics <- function(settlement_date, maturity_date, FV = 100, yield, c, per
     pv_cashflows = pv_cashflows,
     bond_price = bond_price,
     macaulay_duration = macaulay_duration,
-    modified_duration = modified_duration))
+    modified_duration = modified_duration,
+    convexity = convexity))
 }
 
 # Testing functions
-test_bond_metrics <- bond_metrics(settlement_date = "2020-01-01", maturity_date = "2026-01-01", yield = 0.05, c = 0.08)
+test_bond_metrics <- bond_metrics(settlement_date = "2020-01-01", maturity_date = "2026-01-01", yield = 0.08, c = 0.05, periodicity = 1)
 test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", c = 0.05, FV = 100)
 
 # Pull US Treasury data on startup 

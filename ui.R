@@ -7,7 +7,7 @@ dashboardPage(
     sidebarMenu(
       menuItem("US Treasury Yield Data", tabName = "data", icon = icon("table")),
       menuItem("Portfolio Builder", tabName = "builder", icon = icon("wrench")),
-      menuItem("Bond Metrics", tabName = "metrics", icon = icon("circle-info"))
+      menuItem("Bond Metrics Calculator", tabName = "metrics", icon = icon("circle-info"))
     )
   ),
   dashboardBody(
@@ -111,7 +111,7 @@ dashboardPage(
       ),
       tabItem(tabName = "metrics",
               fluidRow(
-                box(width = 4, title = "Input Bond Details", status = "warning",
+                box(width = 3, title = "Input Bond Details", status = "warning",
                     numericInput("calc_fv", "Face/Par Value:", value = 100, min = 0),
                     numericInput("calc_c", "Annual Coupon Rate (%):", value = 5.0, step = 0.1),
                     selectInput("calc_periodicity", "Coupon Payment Frequency:",
@@ -122,8 +122,16 @@ dashboardPage(
                     hr(),
                     actionButton("run_metrics_calc", "Calculate Metrics")
                 ),
-                box(width = 8, title = "Bond Metrics", status = "primary",
-                    valueBoxOutput("bond_price_box", width = 4)
+                box(width = 9, title = "Bond Metrics", status = "primary",
+                    fluidRow(
+                      valueBoxOutput("bond_price_box", width = 3),
+                      valueBoxOutput("modified_duration_box", width = 3),
+                      valueBoxOutput("convexity_box", width = 3)
+                    ),
+                    fluidRow(
+                      valueBoxOutput("central_delta_approx_box", width = 4),
+                      valueBoxOutput("gamma_approx_box", width = 4)
+                    )
                 )
               )
         )

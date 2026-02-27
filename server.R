@@ -153,10 +153,26 @@ function(input, output, session) {
   })
   
   # Bond Metrics Output boxes
+  # Bond Price Output
   output$bond_price_box <- renderValueBox({
     valueBox(formatC(bond_metrics_results()$bond_price, format = "f", digits = 2), "Bond Price")
   })
-    
+  # Modified Duration Output
+  output$modified_duration_box <- renderValueBox({
+    valueBox(formatC(bond_metrics_results()$modified_duration, format = "f", digits = 2), "Modified Duration")
+  })
+  # Convexity Output
+  output$convexity_box <- renderValueBox({
+    valueBox(formatC(bond_metrics_results()$convexity, format = "f", digits = 2), "Convexity")
+  })
+  # Central Delta Approximation Output
+  output$central_delta_approx_box <- renderValueBox({
+    valueBox(formatC(bond_metrics_results()$delta_central_approx, format = "f", digits = 8), "Delta Central Approximation")
+  })
+  # Gamma Approximation Output
+  output$gamma_approx_box <- renderValueBox({
+    valueBox(formatC(bond_metrics_results()$gamma_approx, format = "f", digits = 8), "Gamma Approximation")
+  })
   
   
   #output$build_bond_price <- renderText({

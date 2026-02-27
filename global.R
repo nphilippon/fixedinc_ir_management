@@ -200,7 +200,7 @@ get_bond_metrics <- function(ttm, FV = 100, yield, c, periodicity = 2) {
 # Testing functions
 test_bond_ttm <- get_bond_ttm(settlement_date = "2016-01-01", maturity_date = "2026-01-01")
 test_bond_metrics <- get_bond_metrics(ttm = 10, yield = 0.05, c = 0.05)
-test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", c = 0.05, FV = 100)
+test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", ytm = 0.04, c = 0.05, FV = 100)
 
 # Pull US Treasury data on startup 
 treasury_yields <- get_treasury_data(treasury_symbols)

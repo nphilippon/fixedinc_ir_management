@@ -23,6 +23,19 @@ treasury_symbols <- c(
   "20-Year"  = "DGS20",
   "30-Year"  = "DGS30")
 
+# FRED Fitted Yield on Zero Coupon Bonds
+zero_coupon_symbols <- c(
+  "1-Year (Zero Coupon)" = "THREEFY1", 
+  "2-Year (Zero Coupon)" = "THREEFY2", 
+  "3-Year (Zero Coupon)" = "THREEFY3",
+  "4-Year (Zero Coupon)" = "THREEFY4",
+  "5-Year (Zero Coupon)" = "THREEFY5",
+  "6-Year (Zero Coupon)" = "THREEFY6",
+  "7-Year (Zero Coupon)" = "THREEFY7",
+  "8-Year (Zero Coupon)" = "THREEFY8", 
+  "9-Year (Zero Coupon)" = "THREEFY9", 
+  "10-Year (Zero Coupon)" = "THREEFY10")
+
 # Function for getting and cleaning FRED data using Tidyquant
 get_treasury_data <- function(symbols) {
   raw_data <- symbols %>% 
@@ -212,7 +225,7 @@ test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", ytm 
 
 # Pull US Treasury data on startup 
 treasury_yields <- get_treasury_data(treasury_symbols)
-
+zero_coupon_yields <- get_treasury_data(zero_coupon_symbols)
 
 
 #Portfolio Builder Functions

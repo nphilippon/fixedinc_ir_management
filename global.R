@@ -183,6 +183,11 @@ get_bond_metrics <- function(ttm, FV = 100, yield, c, periodicity = 2) {
   price_plus <- get_bond_price(yield + step_size)
   price_minus <- get_bond_price(yield - step_size)
   
+  # Calculate Delta Approximation
+  delta_approx = (price_plus - price_minus) / (2 * step_size) / 10000
+  # Calculate Gamma Approximation
+  gamma_approx = 0.5 * ((price_plus - 2 * bond_price + price_minus) / step_size^2) / 10000^2
+  
   
   return(list(
     n_pmt_periods = n_pmt_periods,
@@ -195,7 +200,9 @@ get_bond_metrics <- function(ttm, FV = 100, yield, c, periodicity = 2) {
     modified_duration = modified_duration,
     convexity = convexity,
     price_plus = price_plus,
-    price_minus = price_minus))
+    price_minus = price_minus,
+    delta_approx = delta_approx,
+    gamma_approx = gamma_approx))
 }
 
 # Testing functions

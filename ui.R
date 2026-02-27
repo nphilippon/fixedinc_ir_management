@@ -6,7 +6,8 @@ dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       menuItem("US Treasury Yield Data", tabName = "data", icon = icon("table")),
-      menuItem("Portfolio Builder", tabName = "builder", icon = icon("wrench"))
+      menuItem("Portfolio Builder", tabName = "builder", icon = icon("wrench")),
+      menuItem("Bond Metrics", tabName = "metrics", icon = icon("circle-info"))
     )
   ),
   dashboardBody(
@@ -107,10 +108,25 @@ dashboardPage(
                 
               )
               
-            )
+      ),
+      tabItem(tabName = "metrics",
+              fluidRow(
+                box(width = 4, title = "Input Bond Details", status = "warning",
+                    numericInput("calc_fv", "Face/Par Value:", value = 100, min = 0),
+                    numericInput("calc_c", "Annual Coupon Rate (%):", value = 5.0, step = 0.1),
+                    selectInput("calc_periodicity", "Coupon Payment Frequency:",
+                                choices = c("Annual" = 1, "Semi-Annual" = 2, "Quarterly" = 4, "Monthly" = 12),
+                                selected = 2),
+                    numericInput("calc_yield", "Current Yield (%):", value = 6.0, step = 0.1),
+                    numericInput("calc_ttm", "Time to Maturity (Yrs):", value = 5.0),
+                    hr(),
+                    actionButton("run_calc", "Calculate Metrics")
+              )
           )
         )
+    )
   )
+)
       
   
 

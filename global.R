@@ -82,15 +82,14 @@ bond_cf <- function(start_date, end_date = NA, c, ytm,  T2M = 0, periodicity = 2
   }
   
   
-  # Gets the notional value of payments, just coupon * Face value.
+  # Gets the notional value of payments, just coupon * Face value * quantity.
   payment_notional <- FV * (c / periodicity) * quantity
   
   # Gets payment months
   # Assumes first payment is on the START DATE !!!
   months_between <- 12 / periodicity # How many months between payments
-  start_month <- month(start_date)
-  start_day <- day(start_date)
-  total_time <- years(end_date - start_date)
+  start_month <- month(start_date) # Month of the starting date
+  start_day <- day(start_date) # Day of the starting date
   
   pmt_months <- c() # initializes empty vector, this gets filled by the for loop below
   
@@ -103,19 +102,21 @@ bond_cf <- function(start_date, end_date = NA, c, ytm,  T2M = 0, periodicity = 2
     pmt_months[num] <- (start_month + (months_between * (num - 1))) %% 12
   }
   
+  # Initializes the output df, just has date to starat becuase its easy
   output_df <- data.frame(date = date_col)
   
+  # Adds in all the pther columns we need.
   output_df <- output_df %>%
     dplyr::mutate(
       payment = case_when(
-      date == end_date ~ payment_notional + FV,
-      month(date) %% 12 %in% pmt_months & day(date) == day(start_date) ~ payment_notional,
-      TRUE ~ 0
+      date == end_date ~ payment_notional + FV, # Last payment
+      month(date) %% 12 %in% pmt_months & day(date) == day(start_date) ~ payment_notional, # %% 12 because we want 12 to be 0.
+      TRUE ~ 0 # Non-payment days
     ),
-    T2M = as.numeric(difftime(end_date, date, units = "days"))/365,
-    years_past = as.numeric(difftime(date, start_date, units = "day"))/365,
-    discount_factor = 1 / (1 + ytm/periodicity)^(years_past*periodicity),
-    pv_cf = payment * discount_factor) %>%
+    T2M = as.numeric(difftime(end_date, date, units = "days"))/365, # Difference between end and today, in years
+    years_past = as.numeric(difftime(date, start_date, units = "day"))/365, # Difference between start and today, in years
+    discount_factor = 1 / (1 + ytm/periodicity)^(years_past*periodicity), # Discount facotr for the cashflows
+    pv_cf = payment * discount_factor) %>% # Present value of the cf
     dplyr::filter(payment != 0)
   
   return(output_df)

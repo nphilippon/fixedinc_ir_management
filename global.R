@@ -58,10 +58,11 @@ treasury_yields <- get_treasury_data(treasury_symbols)
 
 # NOTE: CF function does not work properly rn, payments are made every 2 years instead of semi-annual
 # Create bond
-bond_cf <- function(start_date, end_date = NA, c, T2M = 0, periodicity = 2, FV, quantity = 1) {
+bond_cf <- function(start_date, end_date = NA, c, ytm,  T2M = 0, periodicity = 2, FV, quantity = 1) {
   # Start_date: beginning date for the bond, the inception and first payment date (CRITICAL)
   # End date: date when last payment is made
   # C: coupon RATE (%) for CF stuff
+  # ytm: Yield to market rate.
   # T2M: user can provide either start and end date, or just start date and T2M. Defaults to 0, in years.
   # Periodicity: number of payments per year, default semi-annual payments 
   # FV: face value
@@ -82,13 +83,14 @@ bond_cf <- function(start_date, end_date = NA, c, T2M = 0, periodicity = 2, FV, 
   
   
   # Gets the notional value of payments, just coupon * Face value.
-  payment_notional <- FV * c
+  payment_notional <- FV * (c / periodicity) * quantity
   
   # Gets payment months
   # Assumes first payment is on the START DATE !!!
   months_between <- 12 / periodicity # How many months between payments
   start_month <- month(start_date)
   start_day <- day(start_date)
+  total_time <- years(end_date - start_date)
   
   pmt_months <- c() # initializes empty vector, this gets filled by the for loop below
   
@@ -104,11 +106,17 @@ bond_cf <- function(start_date, end_date = NA, c, T2M = 0, periodicity = 2, FV, 
   output_df <- data.frame(date = date_col)
   
   output_df <- output_df %>%
-    dplyr::mutate(payment = case_when(
+    dplyr::mutate(
+      payment = case_when(
       date == end_date ~ payment_notional + FV,
       month(date) %% 12 %in% pmt_months & day(date) == day(start_date) ~ payment_notional,
       TRUE ~ 0
-    ))
+    ),
+    T2M = as.numeric(difftime(end_date, date, units = "days"))/365,
+    years_past = as.numeric(difftime(date, start_date, units = "day"))/365,
+    discount_factor = 1 / (1 + ytm/periodicity)^(years_past*periodicity),
+    pv_cf = payment * discount_factor) %>%
+    dplyr::filter(payment != 0)
   
   return(output_df)
 }

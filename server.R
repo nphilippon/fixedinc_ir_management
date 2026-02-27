@@ -93,11 +93,11 @@ function(input, output, session) {
   
   #Initializing temp table
   
-  init_table <- init_new()
+  temp_table <- reactiveValues(data = NULL)
   
   output$temp_table <- renderDT({init_table})
   
-  
+    
 
   # Updating table
   observeEvent(input$add_port_row, {
@@ -109,22 +109,25 @@ function(input, output, session) {
     face_val <- isolate(input$build_FV)
     quantity <- isolate(input$build_quantity)
     
-    
+    new_row <- add_row(start,
+                       end,
+                       coupon,
+                       periods,
+                       face_val,
+                       quantity)
     
     
     if(input$new_old == "New Portfolio"){
       
-      output$temp_table <- renderDT({
+      if(is.null(temp_table$data)){
+          
+          temp_table$data <- new_row
         
-        add_row(start,
-                 end,
-                 coupon,
-                 periods,
-                 face_val,
-                 quantity)
-      })
-      
-      
+      }else{
+        
+        temp_table$data <- rbind(temp_table$data, new_row)
+        
+      }
       
     }else{
       
@@ -133,6 +136,10 @@ function(input, output, session) {
   
   })
     
+  
+  output$temp_table <- renderDT({
+    temp_table$data
+  })
   
   
   

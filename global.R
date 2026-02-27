@@ -196,8 +196,11 @@ get_bond_metrics <- function(ttm, FV = 100, yield, c, periodicity = 2) {
   price_plus <- get_bond_price(yield + step_size)
   price_minus <- get_bond_price(yield - step_size)
   
-  # Calculate Delta Approximation
-  delta_approx = (price_plus - price_minus) / (2 * step_size) / 10000
+  # Calculate Delta Approximation (Central Difference Method)
+  delta_central_approx = (price_plus - price_minus) / (2 * step_size) / 10000
+  # Calculate Delta Approximation (Forward Difference Method)
+  delta_forward_approx = (price_plus - bond_price) / step_size / 10000
+  
   # Calculate Gamma Approximation
   gamma_approx = 0.5 * ((price_plus - 2 * bond_price + price_minus) / step_size^2) / 10000^2
   
@@ -214,7 +217,8 @@ get_bond_metrics <- function(ttm, FV = 100, yield, c, periodicity = 2) {
     convexity = convexity,
     price_plus = price_plus,
     price_minus = price_minus,
-    delta_approx = delta_approx,
+    delta_central_approx = delta_central_approx,
+    delta_forward_approx = delta_forward_approx,
     gamma_approx = gamma_approx))
 }
 

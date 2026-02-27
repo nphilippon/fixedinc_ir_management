@@ -120,10 +120,10 @@ dashboardPage(
                     numericInput("calc_yield", "Current Yield (%):", value = 6.0, step = 0.1),
                     numericInput("calc_ttm", "Time to Maturity (Yrs):", value = 5.0),
                     hr(),
-                    actionButton("run_calc", "Calculate Metrics")
+                    actionButton("run_metrics_calc", "Calculate Metrics")
                 ),
                 box(width = 8, title = "Bond Metrics", status = "primary",
-                    valueBoxOutput("bond_price_box")
+                    valueBoxOutput("bond_price_box", width = 4)
                 )
               )
         )

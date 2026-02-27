@@ -141,6 +141,22 @@ function(input, output, session) {
     temp_table$data
   })
   
+  # Bond Metrics tab reactive calculations (waits for user to run)
+  bond_metrics_results <- eventReactive(input$run_calc, {
+    get_bond_metrics(
+      FV = input$calc_fv,
+      c = input$calc_c / 100,
+      yield = input$calc_yield / 100,
+      ttm = input$calc_ttm,
+      periodicity = as.numeric(input$calc_periodicity)
+    )
+  })
+  
+  # Bond Metrics Output boxes
+  output$bond_price_box <- renderValueBox({
+    valueBox(bond_metrics_results()$bond_price, "Bond Price")
+  })
+    
   
   
   #output$build_bond_price <- renderText({

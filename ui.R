@@ -121,8 +121,11 @@ dashboardPage(
                     numericInput("calc_ttm", "Time to Maturity (Yrs):", value = 5.0),
                     hr(),
                     actionButton("run_calc", "Calculate Metrics")
+                ),
+                box(width = 8, title = "Bond Metrics", status = "primary",
+                    valueBoxOutput("bond_price_box")
+                )
               )
-          )
         )
     )
   )

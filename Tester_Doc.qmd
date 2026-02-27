@@ -37,3 +37,28 @@ tester$price %>% tail(1)
 
 
 ```
+
+```{r}
+
+init_new <- function(start, end, coupon, periodocity, FV, quantity){
+  
+  T2M <- as.numeric(as_date(end)) - as.numeric(as_date(Sys.Date()))
+  
+  years <- (as.numeric(as_date(end)) - as.numeric(as_date(start)))/365
+  
+  temp_build <- tibble::tibble(length = years,
+                               coupon_rate = coupon,
+                               TTM = T2M,
+                               N = periodocity,
+                               Face_Value = FV,
+                               Quantity = quantity,
+                               Nominal_Value = quantity*FV)
+  
+  temp_build
+  
+}
+
+init_new(0,0,0,0,0,0)
+
+
+```

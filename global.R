@@ -6,6 +6,8 @@ library(tidyquant)
 library(DT)
 library(RTL)
 library(plotly)
+library(shinyjs)
+library(bslib)
 
 # FRED US Treasury Symbols (name = readable clean tenor, character = FRED symbol)
 treasury_symbols <- c(
@@ -115,7 +117,6 @@ bond_cf <- function(start_date, end_date = NA, c, T2M = 0, periodicity = 2, FV, 
 get_bond_ttm <- function(settlement_date, maturity_date) {
   # settlement_date: date of bond ownership transfer
   # maturity_date: maturity date of bond
-  
   ttm <- as.numeric(difftime(maturity_date, settlement_date, units = "days")) / 365
   
   return(ttm)
@@ -173,12 +174,10 @@ get_bond_metrics <- function(ttm, FV = 100, yield, c, periodicity = 2) {
   price_plus <- get_bond_price(yield + step_size)
   price_minus <- get_bond_price(yield - step_size)
   
-  # Calculate Delta Approximation
-  delta_approx = (price_plus - price_minus) / (2 * step_size) / 10000
-  # Calculate Gamma Approximation
-  gamma_approx = 0.5 * ((price_plus - 2 * bond_price + price_minus) / step_size^2) / 10000^2
   
   return(list(
+    n_pmt_periods = n_pmt_periods,
+    pmt_times = pmt_times,
     c_pmt = c_pmt,
     cashflows = cashflows,
     pv_cashflows = pv_cashflows,
@@ -187,9 +186,7 @@ get_bond_metrics <- function(ttm, FV = 100, yield, c, periodicity = 2) {
     modified_duration = modified_duration,
     convexity = convexity,
     price_plus = price_plus,
-    price_minus = price_minus,
-    delta_approx = delta_approx,
-    gamma_approx = gamma_approx))
+    price_minus = price_minus))
 }
 
 # Testing functions
@@ -199,3 +196,70 @@ test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", c = 
 
 # Pull US Treasury data on startup 
 treasury_yields <- get_treasury_data(treasury_symbols)
+
+
+
+#Portfolio Builder Functions
+
+init_new <- function(){
+  
+  temp_build <- tibble::tibble(length = 0,
+                               coupon_rate = 0,
+                               TTM = 0,
+                               N = 0,
+                               Face_Value = 0,
+                               Quantity = 0,
+                               Nominal_Value = 0)
+  
+  temp_build
+  
+}
+
+
+add_row <- function(start, end, coupon, periodocity, FV, quantity){
+  
+  T2M <- as.numeric(as_date(end)) - as.numeric(as_date(Sys.Date()))
+  
+  years <- (as.numeric(as_date(end)) - as.numeric(as_date(start)))/365
+  
+  
+  
+  temp_build <- tibble::tibble(length = years,
+                               coupon_rate = coupon,
+                               TTM = T2M,
+                               N = periodocity,
+                               Face_Value = FV,
+                               Quantity = quantity,
+                               Nominal_Value = quantity*FV)
+  
+  temp_build
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

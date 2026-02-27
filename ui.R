@@ -1,5 +1,3 @@
-library(shiny)
-library(bslib)
 
 
 dashboardPage(
@@ -24,52 +22,90 @@ dashboardPage(
               )
       ),
       tabItem(tabName = "builder",
-              fluidRow(
-                box(width = 4, title = "Input Bond to Portfolio", status = "info",
-                  textInput(inputId = "bond_name",
-                            label = "Bond Name",
-                            value = "1-Year Zero Coupon Bond"), 
-                  dateInput(inputId = "start_date",
-                            label = "Date of First Payment",
-                            value = NULL,
-                            min = "1624-12-10", #date of the oldest active bond, issued by Hoogheemraadschap Lekdijk Bovendams
-                            max = NULL,
-                            startview = "month"
-                            ),
-                  dateInput(inputId = "end_date",
-                            label = "Date of Last Payment",
-                            value = NULL,
-                            startview = "month"
-                            ),
-                  numericInput("build_coupon",
-                               "Coupon Rate (%)",
-                               value = 0,
-                               min = 0,
-                               max = 100,
-                               step = 0.01),
-                  numericInput("T2M",
-                               "Time to Maturity (Years)",
-                               value = 0,
-                               min = 0), #may be redundant
-                  numericInput("periodicity",
-                               "Coupons Per Year",
-                               value = 1,
-                               min = 1,
-                               step = 1),
-                  numericInput(inputId = "FV",
-                               label = "Face Value of 1 Bond",
-                               value = 100000),
-                  numericInput("quantity",
-                               "Quantity of Bonds",
-                               value = 0,
-                               min = 0),
-                  actionButton("enter_bond", "Add Bond to Portfolio", class = "btn-block btn-success")
+              sidebarLayout(
+                sidebarPanel(
+      
+                    wellPanel(
+                      id = "start_well",
+                      
+                      useShinyjs(),
+                        
+                      
+                      selectInput("new_old",
+                                  " ",
+                                  choices = c("No Selection", "New Portfolio", "Existing Portfolio"),
+                                  selected = "No Selection"),
+                      
+                      conditionalPanel(
+                        
+                        condition = "input.new_old == 'Existing Portfolio'",
+                        selectInput("portfolio_list",
+                                    "Choose Portfolio",
+                                    choices = c("hello","bye")), #replace with list of portfolios once its developed
+                        actionButton("existing_port_pull",
+                                     "Pull Portfolio")
+                      ),
+                      conditionalPanel(
+                        condition = "input.new_old == 'New Portfolio'",
+                        textInput("new_port",
+                                  "Name Your Portfolio",
+                                  value = ""),
+                        actionButton("initialize_new",
+                                     "Initialize Portfolio")
+                      )
                     ),
-                box(width = 8, title = "put charts here", status = "info")
+                    shinyjs::hidden(wellPanel(
+                      id =  "input_well",
+                      
+                      dateInput(inputId = "build_start",
+                                label = "Date of First Payment",
+                                value = NULL,
+                                min = "1624-12-10", #date of the oldest active bond, issued by Hoogheemraadschap Lekdijk Bovendams
+                                max = NULL,
+                                startview = "month"
+                                ),
+                      dateInput(inputId = "build_end",
+                                label = "Date of Last Payment",
+                                value = NULL,
+                                startview = "month"
+                                ),
+                      numericInput("build_coupon",
+                                   "Coupon Rate (%)",
+                                   value = 0,
+                                   min = 0,
+                                   max = 100,
+                                   step = 0.01),
+                      numericInput("build_periodicity",
+                                   "Coupons Per Year",
+                                   value = 1,
+                                   min = 1,
+                                   step = 1),
+                      numericInput(inputId = "build_FV",
+                                   label = "Face Value of 1 Bond",
+                                   value = 1000),
+                      numericInput("build_quantity",
+                                   "Quantity of Bonds",
+                                   value = 0,
+                                   min = 0),
+                      actionButton("add_port_row",
+                                   "Add Position"),
+                      actionButton("build_exit",
+                                   "Back")
+                      
+                    
+                    ))
+                  
+                ),
+                mainPanel(
+                  
+                  DTOutput("temp_table")
+                  
+                )
+                
+                
+                
+                
               )
-
-                 
-
               
             )
           )

@@ -4,6 +4,15 @@ library(tidyquant)
 library(tidyverse)
 library(plotly)
 
+testdf <- tibble("variables" = c("bond_name",
+                                 "start_date",
+                                 "end_date",
+                                 "build_coupon",
+                                 "T2M",
+                                 "periodicity",
+                                 "FV",
+                                 "quantity"))
+
 function(input, output, session) {
 
   # Yield Data Table
@@ -84,7 +93,7 @@ function(input, output, session) {
     
   })
   
-  
+
   
   
   

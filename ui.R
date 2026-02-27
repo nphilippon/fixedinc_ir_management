@@ -24,8 +24,11 @@ dashboardPage(
               )
       ),
       tabItem(tabName = "builder",
-              sidebarLayout(
-                sidebarPanel(
+              fluidRow(
+                box(width = 4, title = "Input Bond to Portfolio", status = "info",
+                  textInput(inputId = "bond_name",
+                            label = "Bond Name",
+                            value = "1-Year Zero Coupon Bond"), 
                   dateInput(inputId = "start_date",
                             label = "Date of First Payment",
                             value = NULL,
@@ -59,18 +62,14 @@ dashboardPage(
                   numericInput("quantity",
                                "Quantity of Bonds",
                                value = 0,
-                               min = 0)
-                ),
-                mainPanel(
-                  
-                  "Hello World"
-                  
-                )
-                
-                
-                
-                
+                               min = 0),
+                  actionButton("enter_bond", "Add Bond to Portfolio", class = "btn-block btn-success")
+                    ),
+                box(width = 8, title = "put charts here", status = "info")
               )
+
+                 
+
               
             )
           )

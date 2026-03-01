@@ -4,23 +4,52 @@ format: html
 editor: visual
 ---
 
-## Quarto
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+#first steps of spline
+library(tidyverse)
+library(splines)
+library(tidyquant)
+
+tick <- c(
+  "1-Month"  = "DGS1MO",
+  "3-Month"  = "DGS3MO",
+  "6-Month"  = "DGS6MO",
+  "1-Year"   = "DGS1",
+  "2-Year"   = "DGS2",
+  "3-Year"   = "DGS3",
+  "5-Year"   = "DGS5",
+  "7-Year"   = "DGS7",
+  "10-Year"  = "DGS10",
+  "20-Year"  = "DGS20",
+  "30-Year"  = "DGS30")
+
+quotes <- tq_get(tick, get = "economic.data", from = "1992-01-01")
+
+quote <- quotes %>% dplyr::mutate(
+  maturity = ifelse(quotes$`1-Month` == "DGS1MO", 1/12,
+                    ifelse(quotes$`1-Month` == "DGS3MO", 3/12,
+                    ifelse(quotes$`1-Month` == "DGS6MO", 6/12,
+    parse_number(quotes$`1-Month`)
+  )))
+) %>% drop_na() %>% 
+group_by(maturity) %>% 
+  dplyr::mutate(
+    changeBps = (price - dplyr::lag(price)) * 100
+      )
+
+todayquotes <- quote %>% dplyr::filter(date == max(date)) %>% dplyr::select(date, maturity, price)
+
+spline <- todayquotes %>% ggplot2::ggplot(aes(x = maturity, y = price)) +
+  ggplot2::geom_point(size = 3, color = "limegreen") +
+  ggplot2::geom_smooth(
+    method = "lm",
+    formula = y ~ splines::bs(x, knots = c(2, 5, 10), degree = 3),
+    se = FALSE,
+    color = "darkred",
+    linewidth = 1
+  )
+  
+spline
+
+#now we have the chart, need to find a way to robustly apply it to the model in a resource-effective way, and tie it in to the UI. The goal is to be able to input a date in the future, and output the discount rate for that date, so we can properly measure interest rate risk by discounting cash flows back to today and measuring delta gamma theta etc. by estimating changes in rates.
 ```
-
-You can add options to executable code like this
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).

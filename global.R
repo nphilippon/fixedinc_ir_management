@@ -235,20 +235,6 @@ zero_coupon_yields <- get_treasury_data(zero_coupon_symbols)
 
 #Portfolio Builder Functions
 
-init_new <- function(){
-  
-  temp_build <- tibble::tibble(length = 0,
-                               coupon_rate = 0,
-                               TTM = 0,
-                               N = 0,
-                               Face_Value = 0,
-                               Quantity = 0,
-                               Nominal_Value = 0)
-  
-  temp_build
-  
-}
-
 
 add_row <- function(start, end, coupon, periodocity, FV, quantity){
   
@@ -293,9 +279,12 @@ portfolio_files
 
 }
 
+
+
+
 portfolio_files <- update_portfolios()
 
-portfolio_list <- names(update_portfolios())
+portfolio_list <- names(portfolio_files)
 
 #Small function (barely helpful) to save portfolio into csv
 
@@ -303,7 +292,7 @@ port_path <- paste(dirname(getActiveDocumentContext()$path), "/Portfolios", sep 
 
 save_portfolio <- function(name, table){
   
-  connection <- paste(port_path,"/", name, sep = "")
+  connection <- paste(port_path,"/", name, ".csv", sep = "")
   
   readr::write_csv(table, connection)
   

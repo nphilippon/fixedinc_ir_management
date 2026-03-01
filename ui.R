@@ -40,9 +40,7 @@ dashboardPage(
                       conditionalPanel(
                         
                         condition = "input.new_old == 'Existing Portfolio'",
-                        selectInput("portfolio_list",
-                                    "Choose Portfolio",
-                                    choices = names(update_portfolios())), #replace with list of portfolios once its developed
+                        uiOutput("portfolio_list"), #replace with list of portfolios once its developed
                         actionButton("existing_port_pull",
                                      "Pull Portfolio")
                       ),

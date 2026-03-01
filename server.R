@@ -89,11 +89,7 @@ function(input, output, session) {
     shinyjs::showElement(id = "start_well")
     shinyjs::hideElement(id = "save_portfolio")
     shinyjs::hideElement(id = "input_well")
-    
-    
-    portfolio_files <- names(update_portfolios())
-    
-    
+  
   })
   
   
@@ -132,11 +128,9 @@ function(input, output, session) {
       temp_table$data <- rbind(temp_table$data, new_row)
       
     }
-      
-
   
   })
-    
+  
   
   #Showing Existing Portfolio Immediately with following:
   
@@ -153,16 +147,7 @@ function(input, output, session) {
     temp_table$data
   })
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
   #Saving Portfolio
   
   port_name <- reactiveValues(data = NULL)
@@ -198,17 +183,15 @@ function(input, output, session) {
     
   })
     
+  output$portfolio_list <- renderUI({
+    
+    selectInput("portfolio_list",
+                "Choose Portfolio",
+                choices = names(update_portfolios()))
+    
+  })
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+
   
   # Bond Metrics tab reactive calculations (waits for user to run)
   bond_metrics_results <- eventReactive(input$run_metrics_calc, {

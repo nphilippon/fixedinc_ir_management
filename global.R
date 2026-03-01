@@ -8,6 +8,7 @@ library(RTL)
 library(plotly)
 library(shinyjs)
 library(bslib)
+library(rstudioapi) #using this to set working directory to wherever this file is located (I think there may be something better)
 
 # FRED US Treasury Symbols (name = readable clean tenor, character = FRED symbol)
 treasury_symbols <- c(
@@ -270,16 +271,43 @@ add_row <- function(start, end, coupon, periodocity, FV, quantity){
 }
 
 
+#Portfolio Builder list of portfolios in "Portfolios" Folder
+
+update_portfolios <- function(){
+
+port_path <- paste(dirname(getActiveDocumentContext()$path), "/Portfolios", sep = "") 
+#This means the 'Portfolios' folder must live BESIDE the global file
 
 
+portfolio_list <- list.files(path = port_path, pattern = "\\.csv$")
 
+portfolio_paths <- lapply(portfolio_list, function(x) paste0(port_path,"/", x, sep = ""))
 
+portfolio_files <- lapply(portfolio_paths, read.csv, check.names = FALSE)
+#So from this I learnt that the csv file needs to have something in it for this entire function to work
+#Two solutions - require at least one row of info or reduce fragility in the case of one or two NAs
 
+names(portfolio_files) <- portfolio_list
 
+portfolio_files
 
+}
 
+portfolio_files <- update_portfolios()
 
+portfolio_list <- names(update_portfolios())
 
+#Small function (barely helpful) to save portfolio into csv
+
+port_path <- paste(dirname(getActiveDocumentContext()$path), "/Portfolios", sep = "") 
+
+save_portfolio <- function(name, table){
+  
+  connection <- paste(port_path,"/", name, sep = "")
+  
+  readr::write_csv(table, connection)
+  
+}
 
 
 

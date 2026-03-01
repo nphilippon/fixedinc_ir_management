@@ -42,7 +42,7 @@ dashboardPage(
                         condition = "input.new_old == 'Existing Portfolio'",
                         selectInput("portfolio_list",
                                     "Choose Portfolio",
-                                    choices = c("hello","bye")), #replace with list of portfolios once its developed
+                                    choices = names(update_portfolios())), #replace with list of portfolios once its developed
                         actionButton("existing_port_pull",
                                      "Pull Portfolio")
                       ),
@@ -94,13 +94,16 @@ dashboardPage(
                                    "Back")
                       
                     
-                    ))
+                    )),
+                    
+                    shinyjs::hidden(actionButton("save_portfolio",
+                                 "Save Portfolio"))
                   
                 ),
                 mainPanel(
                   
-                  DTOutput("temp_table")
-                  
+                  DTOutput("temp_table"),
+                  shinyjs::hidden(textOutput("portfolio_name"))
                 )
                 
                 

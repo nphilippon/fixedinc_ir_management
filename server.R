@@ -68,6 +68,7 @@ function(input, output, session) {
   observeEvent(input$initialize_new, {
     
     shinyjs::showElement(id = "input_well")
+    shinyjs::showElement(id = "save_portfolio")
     shinyjs::hideElement(id = "start_well")
     
     
@@ -76,6 +77,7 @@ function(input, output, session) {
   observeEvent(input$existing_port_pull, {
     
     shinyjs::showElement(id = "input_well")
+    shinyjs::showElement(id = "save_portfolio")
     shinyjs::hideElement(id = "start_well")
     
     
@@ -85,7 +87,11 @@ function(input, output, session) {
   observeEvent(input$build_exit, {
     
     shinyjs::showElement(id = "start_well")
+    shinyjs::hideElement(id = "save_portfolio")
     shinyjs::hideElement(id = "input_well")
+    
+    
+    portfolio_files <- names(update_portfolios())
     
     
   })
@@ -116,30 +122,93 @@ function(input, output, session) {
                        face_val,
                        quantity)
     
-    
-    if(input$new_old == "New Portfolio"){
       
-      if(is.null(temp_table$data)){
-          
-          temp_table$data <- new_row
+    if(is.null(temp_table$data)){
         
-      }else{
-        
-        temp_table$data <- rbind(temp_table$data, new_row)
-        
-      }
+        temp_table$data <- new_row
       
     }else{
       
-      "Not New Table"
-  }
+      temp_table$data <- rbind(temp_table$data, new_row)
+      
+    }
+      
+
   
   })
     
+  
+  #Showing Existing Portfolio Immediately with following:
+  
+  observeEvent(input$existing_port_pull, {
+    
+    exist_port <- isolate(input$portfolio_list)
+    
+    temp_table$data <- as.data.frame(portfolio_files[[exist_port]])
+    
+  })
+  
   
   output$temp_table <- renderDT({
     temp_table$data
   })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  #Saving Portfolio
+  
+  port_name <- reactiveValues(data = NULL)
+
+  
+  output$portfolio_name <- renderText({
+    port_name$data
+  })
+  
+  
+  
+  observeEvent(input$save_portfolio, {
+    
+    new_port <- isolate(input$new_port)
+    exist_port <- isolate(input$portfolio_list)
+    
+    
+    if(input$new_old == "New Portfolio"){
+      
+      port_name$data <- new_port
+      
+    }else if(input$new_old == "Existing Portfolio"){
+      
+      port_name$data <- exist_port
+      
+    }
+    
+    
+    shinyjs::showElement("portfolio_name")
+    
+    save_portfolio(port_name$data, temp_table$data)
+    
+    
+  })
+    
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   # Bond Metrics tab reactive calculations (waits for user to run)
   bond_metrics_results <- eventReactive(input$run_metrics_calc, {

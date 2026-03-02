@@ -80,9 +80,11 @@ pred <- cbind(new_maturities, predictions) %>%
   dplyr::transmute(maturity, price = fit) 
 
 x <- rbind(todayquotes, pred) %>% 
-  dplyr::arrange(maturity)
+  dplyr::arrange(maturity) %>% dplyr::transmute(
+    maturity, rate = price / 100)
+  
 
-spline2 <- x %>% ggplot2::ggplot(aes(x = maturity, y = price)) +
+spline2 <- x %>% ggplot2::ggplot(aes(x = maturity, y = rate)) +
   ggplot2::geom_point(size = 3, color = "limegreen") +
   ggplot2::geom_smooth(
     method = "lm",
@@ -91,8 +93,13 @@ spline2 <- x %>% ggplot2::ggplot(aes(x = maturity, y = price)) +
     color = "darkred",
     linewidth = 1
   ) +
-  ggplot2::scale_x_continuous(breaks = c(todayquotes$maturity))
+  ggplot2::scale_x_continuous(breaks = c(todayquotes$maturity)) + 
+  ggplot2::scale_y_continuous(labels = scales::percent_format(accuracy = 0.2)) +
+  ggplot2::labs(title = "Forward Rate Curve Interpolation",
+                subtitle = "Used to predict discount rate at odd maturities for future cash flows",
+                y = "interest rate",
+                x = "maturity")
 
 spline2
-#I can now take in years inputs and predict the rate for that maturity. Now the challenge is to take future cash flows, calculate how many years from today, predict the rate, and then turn that into a discount factor. 
+ #I can now take in years inputs and predict the rate for that maturity. Now the challenge is to take future cash flows, calculate how many years from today, predict the rate, and then turn that into a discount factor. 
 ```

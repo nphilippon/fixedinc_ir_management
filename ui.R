@@ -23,8 +23,8 @@ dashboardPage(
               )
       ),
       tabItem(tabName = "builder",
-              sidebarLayout(
-                sidebarPanel(
+              fluidRow(
+                column(3,
       
                     wellPanel(
                       id = "start_well",
@@ -89,7 +89,9 @@ dashboardPage(
                       actionButton("add_port_row",
                                    "Add Position"),
                       actionButton("build_exit",
-                                   "Back")
+                                   "Back"),
+                      actionButton("delete_button", "Delete",
+                                   style = "color: #fff; background-color: #FF0000; border-color: #000000")
                       
                     
                     )),
@@ -98,15 +100,15 @@ dashboardPage(
                                  "Save Portfolio"))
                   
                 ),
-                mainPanel(
-                  
-                  DTOutput("temp_table"),
-                  shinyjs::hidden(textOutput("portfolio_name"))
+                column(9,
+                  box(
+                   title = "Current Portfolio",
+                   width = NULL,
+                   DTOutput("temp_table", height = "900px"),
+                   verbatimTextOutput('row_id')
+                   
+                  )   
                 )
-                
-                
-                
-                
               )
               
       ),

@@ -392,7 +392,8 @@ portfolio_files
 
 portfolio_files <- update_portfolios()
 
-portfolio_list <- names(portfolio_files)
+names(portfolio_files) <- names(portfolio_files) %>% 
+  lapply(., function(x){gsub(".csv", "", x)})
 
 #Small function (barely helpful) to save portfolio into csv
 
@@ -402,7 +403,7 @@ save_portfolio <- function(name, table){
   
   connection <- paste(port_path,"/", name, ".csv", sep = "")
   
-  readr::write_csv(table, connection)
+  readr::write_csv(table, connection, append = FALSE)
   
 }
 

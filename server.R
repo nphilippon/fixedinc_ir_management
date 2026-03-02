@@ -64,6 +64,13 @@ function(input, output, session) {
   
   #Portfolio Builder Section Below
   
+  #Initializing temp table
+  
+  temp_table <- reactiveValues(data = NULL)
+  
+  output$temp_table <- renderDT({init_table})
+  
+  
   
   observeEvent(input$initialize_new, {
     
@@ -83,24 +90,37 @@ function(input, output, session) {
     
   })
   
+#Multiple things occur when user presses "back"
   
   observeEvent(input$build_exit, {
+    
+    showModal(
+      modalDialog(
+        
+        paste("All progress will be lost. To prevent this, save portfolio first"),
+        easyClose = TRUE,
+        footer = tagList(
+          actionButton("confirm_back",
+                               "Continue",
+                               style = "float:left"),
+          modalButton("Stay")
+        )
+      )
+    )
+  })
+  
+  observeEvent(input$confirm_back, {
     
     shinyjs::showElement(id = "start_well")
     shinyjs::hideElement(id = "save_portfolio")
     shinyjs::hideElement(id = "input_well")
-  
+    
+    temp_table$data <- NULL
+    removeModal()
+    
   })
   
   
-  #Initializing temp table
-  
-  temp_table <- reactiveValues(data = NULL)
-  
-  output$temp_table <- renderDT({init_table})
-  
-    
-
   # Updating table
   observeEvent(input$add_port_row, {
     
@@ -132,13 +152,27 @@ function(input, output, session) {
   })
   
   
+  #Initializing portfolio_files as a server variable
+  
+  updating_list <- reactiveValues(data = portfolio_files)
+  
+  
   #Showing Existing Portfolio Immediately with following:
+
+  output$portfolio_list <- renderUI({
+    
+    selectInput("portfolio_list",
+                "Choose Portfolio",
+                choices = names(updating_list$data))
+    
+  })
+  
   
   observeEvent(input$existing_port_pull, {
     
     exist_port <- isolate(input$portfolio_list)
     
-    temp_table$data <- as.data.frame(portfolio_files[[exist_port]])
+    temp_table$data <- as.data.frame(updating_list$data[[exist_port]])
     
   })
   
@@ -158,8 +192,25 @@ function(input, output, session) {
   })
   
   
-  
   observeEvent(input$save_portfolio, {
+
+    showModal(modalDialog(
+      
+      paste("Saving a portfolio with the same name as an existing portfolio will overwrite the existing portfolio."),
+      footer = tagList(actionButton("save_continue",
+                            "Continue",
+                            style = "float:left"),
+                       modalButton("Back")
+               ),
+      easyClose = TRUE
+
+    ))
+    
+    
+  })
+  
+  
+  observeEvent(input$save_continue,{
     
     new_port <- isolate(input$new_port)
     exist_port <- isolate(input$portfolio_list)
@@ -169,28 +220,106 @@ function(input, output, session) {
       
       port_name$data <- new_port
       
+      updating_list$data <- append(updating_list$data, setNames(list(temp_table$data), as.character(new_port)))
+      
     }else if(input$new_old == "Existing Portfolio"){
       
       port_name$data <- exist_port
       
+      updating_list$data[[as.character(exist_port)]] <- list(temp_table$data)
+      
     }
-    
-    
-    shinyjs::showElement("portfolio_name")
     
     save_portfolio(port_name$data, temp_table$data)
     
+    removeModal()
     
-  })
-    
-  output$portfolio_list <- renderUI({
-    
-    selectInput("portfolio_list",
-                "Choose Portfolio",
-                choices = names(update_portfolios()))
     
   })
   
+  
+  
+  
+  
+  
+  
+    
+  #Deleting Rows
+  
+  selected_rows <- reactive({
+    input$temp_table_rows_selected
+    })
+  
+  
+  output$row_id <- renderPrint(as.vector(selected_rows()))
+  
+  observeEvent(input$delete_button, {
+    
+    row_id <- as.vector(selected_rows())
+    
+    if(is.null(row_id) == TRUE){
+      showModal(
+        modalDialog("No Rows Selected",
+                    easyClose = TRUE,
+                    footer = modalButton("OK"))
+      )
+      
+    }else{
+      
+      showModal(
+        modalDialog(paste("Please confirm: Rows ", 
+                          paste(row_id, collapse = ", "), 
+                          " will be deleted."),
+                    easyClose = TRUE,
+                    footer = tagList(
+                      actionButton("delete_modal",
+                                   "Delete Selected Rows",
+                                   style = "color: #fff; background-color: #FF0000; border-color: #000000; float:left"),
+                      
+                      modalButton("Go Back"))
+                    )
+      )
+    }
+  })
+  
+  
+  observeEvent(input$delete_modal, {
+    
+    row_id <- as.vector(selected_rows())
+    
+    temp_table$data <- temp_table$data %>% 
+      slice(-row_id)
+    
+    removeModal()
+    
+  })  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    
 
   
   # Bond Metrics tab reactive calculations (waits for user to run)

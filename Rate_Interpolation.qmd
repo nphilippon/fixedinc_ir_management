@@ -37,7 +37,10 @@ group_by(maturity) %>%
     changeBps = (price - dplyr::lag(price)) * 100
       )
 
-todayquotes <- quote %>% dplyr::filter(date == max(date)) %>% dplyr::select(date, maturity, price)
+currentday <- max(quote$date)
+
+todayquotes <- quote %>% dplyr::filter(date == currentday) %>% 
+  dplyr::select(maturity, price)
 
 spline <- todayquotes %>% ggplot2::ggplot(aes(x = maturity, y = price)) +
   ggplot2::geom_point(size = 3, color = "limegreen") +
@@ -52,4 +55,44 @@ spline <- todayquotes %>% ggplot2::ggplot(aes(x = maturity, y = price)) +
 spline
 
 #now we have the chart, need to find a way to robustly apply it to the model in a resource-effective way, and tie it in to the UI. The goal is to be able to input a date in the future, and output the discount rate for that date, so we can properly measure interest rate risk by discounting cash flows back to today and measuring delta gamma theta etc. by estimating changes in rates.
+
+#9.3.6
+
+s <- stats::lm(
+  price ~ splines::bs(maturity, knots = c(2,5,10), degree = 3),
+  todayquotes
+)
+
+summary(s)
+
+#9.3.7
+
+new_maturities <- data.frame(maturity = c(0.5, 4, 8, 12, 15, 22))
+
+predictions <- s %>% 
+  stats::predict(
+    newdata = new_maturities,
+    interval = "prediction",
+    level = 0.95
+  )
+
+pred <- cbind(new_maturities, predictions) %>% 
+  dplyr::transmute(maturity, price = fit) 
+
+x <- rbind(todayquotes, pred) %>% 
+  dplyr::arrange(maturity)
+
+spline2 <- x %>% ggplot2::ggplot(aes(x = maturity, y = price)) +
+  ggplot2::geom_point(size = 3, color = "limegreen") +
+  ggplot2::geom_smooth(
+    method = "lm",
+    formula = y ~ splines::bs(x, knots = c(2, 5, 10), degree = 3),
+    se = FALSE,
+    color = "darkred",
+    linewidth = 1
+  ) +
+  ggplot2::scale_x_continuous(breaks = c(todayquotes$maturity))
+
+spline2
+#I can now take in years inputs and predict the rate for that maturity. Now the challenge is to take future cash flows, calculate how many years from today, predict the rate, and then turn that into a discount factor. 
 ```

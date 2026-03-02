@@ -62,3 +62,52 @@ init_new(0,0,0,0,0,0)
 
 
 ```
+
+```{r}
+
+
+test_list <- c(1,2,3,4,5)
+
+test_cat <- cat(test_list, sep = ", ")
+
+print(cat(paste(test_list)))
+
+test_cat
+
+
+paste("Rows", paste(test_list, collapse = ", "), "Will be Deleted")
+
+
+```
+
+```{r}
+
+update_portfolios <- function(){
+
+port_path <- paste(dirname(getActiveDocumentContext()$path), "/Portfolios", sep = "") 
+#This means the 'Portfolios' folder must live BESIDE the global file
+
+
+portfolio_list <- list.files(path = port_path, pattern = "\\.csv$")
+
+portfolio_paths <- lapply(portfolio_list, function(x) paste0(port_path,"/", x, sep = ""))
+
+portfolio_files <- lapply(portfolio_paths, read.csv, check.names = FALSE)
+#So from this I learnt that the csv file needs to have something in it for this entire function to work
+#Two solutions - require at least one row of info or reduce fragility in the case of one or two NAs
+
+names(portfolio_files) <- portfolio_list
+
+portfolio_files
+
+}
+
+
+
+
+portfolio_files <- update_portfolios()
+
+portfolio_list <- names(portfolio_files)
+
+lapply(portfolio_list, function(x){gsub(".csv", "", x)})
+```

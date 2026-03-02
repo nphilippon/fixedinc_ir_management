@@ -9,6 +9,7 @@ library(plotly)
 library(shinyjs)
 library(bslib)
 library(rstudioapi) #using this to set working directory to wherever this file is located (I think there may be something better)
+library(splines)
 
 # FRED US Treasury Symbols (name = readable clean tenor, character = FRED symbol)
 treasury_symbols <- c(
@@ -23,19 +24,6 @@ treasury_symbols <- c(
   "10-Year"  = "DGS10",
   "20-Year"  = "DGS20",
   "30-Year"  = "DGS30")
-
-# FRED Fitted Yield on Zero Coupon Bonds
-zero_coupon_symbols <- c(
-  "1-Year (Zero Coupon)" = "THREEFY1", 
-  "2-Year (Zero Coupon)" = "THREEFY2", 
-  "3-Year (Zero Coupon)" = "THREEFY3",
-  "4-Year (Zero Coupon)" = "THREEFY4",
-  "5-Year (Zero Coupon)" = "THREEFY5",
-  "6-Year (Zero Coupon)" = "THREEFY6",
-  "7-Year (Zero Coupon)" = "THREEFY7",
-  "8-Year (Zero Coupon)" = "THREEFY8", 
-  "9-Year (Zero Coupon)" = "THREEFY9", 
-  "10-Year (Zero Coupon)" = "THREEFY10")
 
 # Function for getting and cleaning FRED data using Tidyquant
 get_treasury_data <- function(symbols) {
@@ -338,8 +326,6 @@ test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", ytm 
 
 # Pull US Treasury data on startup 
 treasury_yields <- get_treasury_data(treasury_symbols)
-zero_coupon_yields <- get_treasury_data(zero_coupon_symbols)
-
 
 #Portfolio Builder Functions
 
@@ -407,18 +393,55 @@ save_portfolio <- function(name, table){
   
 }
 
+#--- Cubic Spline interpolation and discount factor calcs below ---#
 
+quotes <- tq_get(treasury_symbols, get = "economic.data", from = Sys.Date() - 7)
+#need the maturity for the math, could be more robust but I manually converted the strings with "MO" since there was only 3 of them
+quote <- quotes %>% dplyr::mutate(
+  maturity = ifelse(quotes$`1-Month` == "DGS1MO", 1/12,
+                    ifelse(quotes$`1-Month` == "DGS3MO", 3/12,
+                           ifelse(quotes$`1-Month` == "DGS6MO", 6/12,
+                                  parse_number(quotes$`1-Month`)
+                           )))
+) %>% drop_na() %>% 
+  group_by(maturity)
+#need to know the most recent quotes, since our function can always build the forward curve given the most recent fed quotes
+recentday <- max(quote$date)
 
+recentquotes <- quote %>% dplyr::filter(date == recentday) %>% 
+  dplyr::select(maturity, price)
+#here is the model, inspired from fintechII notes
+spline <- stats::lm(
+  price ~ splines::bs(maturity, knots = c(2,5,10), degree = 3),
+  recentquotes
+)
+#tested with fake data frame
+fakedf <- data.frame(date = as.Date(c("2026-06-01", "2028-01-01", "2032-01-01", "2040-08-01")), cf = c(1200, 100, 10000, 10000))
 
+discount_factor <- function(data) {
+  #must input the bond cash flows in a data frame containing dates and cash flows ie) data
+  df <- data %>% 
+    dplyr::mutate(maturity = as.numeric(date - recentday) / 365.25)
+  
+  new_maturities <- df %>% dplyr::select(maturity)
+  
+  predictions <- spline %>% 
+    stats::predict(
+      newdata = new_maturities,
+      interval = "prediction",
+      level = 0.95
+    )
+  
+  pred <- cbind(new_maturities, predictions) %>% 
+    dplyr::transmute(maturity, rate = fit / 100) 
+  
+  df <- df %>% dplyr::left_join(pred) %>% 
+    dplyr::mutate(df = (1 / (1 + rate)^maturity),
+                  pv = cf * df) 
+  
+  df
+}
+#here is the output from the test
+discount_factor(fakedf)
 
-
-
-
-
-
-
-
-
-
-
-
+#--- end of rate interpolation via cubic spline and discount factor formula/calculator function work ---#

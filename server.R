@@ -17,9 +17,15 @@ function(input, output, session) {
   output$hist_yield_chart <- renderPlotly({
     req(treasury_yields)
     
+    # Custom Colour Palette
+    plot_colors <- c(
+      "#d45087", "#f95d6a", "#ff7c43", "#ffa600",
+      "#488f31", "#83af70", "#bad0af", "#003f5c",
+      "#2f4b7c", "#665191", "#a05195")
+    
     # Makes plotly line chart
-    plot_ly(treasury_yields, x = ~date, y = ~rate, color = ~symbol,
-            type = 'scatter', mode = 'lines') %>%
+    plot_ly(treasury_yields_named, x = ~date, y = ~rate, color = ~tenor,
+            type = 'scatter', mode = 'lines', colors = plot_colors) %>%
       layout(
         # Adds hover info for all tenors on that date
         hovermode = "x unified",

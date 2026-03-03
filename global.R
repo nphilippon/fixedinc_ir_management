@@ -58,7 +58,6 @@ treasury_yields <- get_treasury_data(treasury_symbols, maturities = treasury_mat
 
 treasury_yields_wide <- treasury_yields %>% 
   dplyr::select(-maturity) %>% 
-  group_by(date) %>% 
   tidyr::pivot_wider(., names_from = symbol, values_from = rate) %>%
   dplyr::rename(
     "1-Month" = "DGS1MO", 
@@ -75,7 +74,8 @@ treasury_yields_wide <- treasury_yields %>%
   dplyr::arrange(desc(date))
     
 treasury_yields_named <- treasury_yields_wide %>% 
-  tidyr::pivot_longer(cols = -date, names_to = "symbol", values_to = "rate")
+  tidyr::pivot_longer(cols = -date, names_to = "tenor", values_to = "rate") %>% 
+  dplyr::mutate(tenor = factor(tenor, levels = treasury_names))
 
 # NOTE: CF function does not work properly rn, payments are made every 2 years instead of semi-annual
 # Create bond

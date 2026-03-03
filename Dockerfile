@@ -25,7 +25,6 @@ RUN R -q -e 'if (!requireNamespace("devtools", quietly=TRUE)) install.packages("
 
 # Clones the repo into a new folder, changes owners to non-root. (Shout out the bash manual)
 RUN git clone https://github.com/nphilippon/fixedinc_ir_management.git /srv/shiny-server/shiny-IR
-RUN chown shiny:shiny /srv/shiny-server/shiny-IR
 
 EXPOSE 3838
 

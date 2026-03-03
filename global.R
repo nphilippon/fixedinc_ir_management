@@ -77,6 +77,27 @@ treasury_yields_named <- treasury_yields_wide %>%
   tidyr::pivot_longer(cols = -date, names_to = "tenor", values_to = "rate") %>% 
   dplyr::mutate(tenor = factor(tenor, levels = treasury_names))
 
+# Function for getting expanded yield data
+get_yield_metrics <- function(yields, m = 2, price = 100) {
+  # yields: dataframe containing yield data with cols maturity, date, rate
+  # m: coupon rate (defaults to 2)
+  # price: bond price (defaults to 100)
+  yields_metrics <- yields %>% 
+    group_by(maturity) %>% 
+    arrange(date) %>% 
+    dplyr::mutate(
+      # Daily change (in bps)
+      changeBasisPoints = (rate - lag(rate)) * 10000,
+      # Coupon Rate and Price (hardcoded for now)
+      m = m, price = price) %>% 
+    ungroup() %>%
+    dplyr::select(maturity, date, rate, changeBasisPoints, m, price)
+  
+  return(yields_metrics)
+}
+
+treasury_yields_metrics <- get_yield_metrics(treasury_yields)
+
 # NOTE: CF function does not work properly rn, payments are made every 2 years instead of semi-annual
 # Create bond
 bond_cf <- function(start_date, end_date = NA, c, ytm,  T2M = 0, periodicity = 2, FV, quantity = 1) {

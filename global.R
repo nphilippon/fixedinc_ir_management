@@ -11,19 +11,44 @@ library(bslib)
 library(rstudioapi) #using this to set working directory to wherever this file is located (I think there may be something better)
 library(splines)
 
-# FRED US Treasury Symbols (name = readable clean tenor, character = FRED symbol)
+# FRED US Treasury Symbols
 treasury_symbols <- c(
-  "1-Month"  = "DGS1MO",
-  "3-Month"  = "DGS3MO",
-  "6-Month"  = "DGS6MO",
-  "1-Year"   = "DGS1",
-  "2-Year"   = "DGS2",
-  "3-Year"   = "DGS3",
-  "5-Year"   = "DGS5",
-  "7-Year"   = "DGS7",
-  "10-Year"  = "DGS10",
-  "20-Year"  = "DGS20",
-  "30-Year"  = "DGS30")
+  "DGS1MO", "DGS3MO", "DGS6MO",
+  "DGS1", "DGS2", "DGS3",
+  "DGS5", "DGS7", "DGS10",
+  "DGS20", "DGS30")
+
+# Be SURE that this vector corresponds 1:1 with the one above, shit will brick otherwise.
+treasury_names <- c(
+  "1-Month", "3-Month", "6-Month",
+  "1-Year", "2-Year", "3-Year",
+  "5-Year", "7-Year", "10-Year",
+  "20-Year", "30-Year"
+)
+
+# A function to pull the treasury data
+get_treasury_data <- function(symbols, names, from = "1992-01-02", dim = "long"){
+  # Symbols: tickers for pulling, must be economic.data
+  # Names: Vector. Names to swap out the tickers with, only compatible with wide df
+  # from: date to start pulling from, default is 1992-01-02
+  # dim: Dimension, either "long" or "wide", default is long
+  
+  tmp <- tq_get(symbols, get = "economic.data", from = from) %>%
+    dplyr::select(date, symbol, price)
+  
+  # Final formatting
+  if (dim == "wide") {
+    # User wants it wide
+    output <- tmp %>%
+      tidyr::pivot_wider(., names_from = symbol, values_from = price) %>%
+      dplyr::rename_with(~ names, 2:(length(names)+1)) # replaces the names for every column except date (hence the 2:length(names + 1)) because the names vector doesnt have date
+  }
+  else {
+    output <- tmp
+  }
+  
+  return(output)
+}
 
 # Function for getting and cleaning FRED data using Tidyquant
 get_treasury_data <- function(symbols) {

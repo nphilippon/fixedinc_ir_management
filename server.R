@@ -12,20 +12,13 @@ function(input, output, session) {
   })
   
   # Historical Yield Chart
+  
+  
   output$hist_yield_chart <- renderPlotly({
     req(treasury_yields)
     
-    # Convert into long df with cols date, tenor, yield for chart
-    plot_data <- treasury_yields %>% 
-      pivot_longer(cols = -date, names_to = "Tenor", values_to = "Yield") %>%
-      mutate(
-        # Converts Tenor to a factor in order of maturity (for legend ordering)
-        Tenor = factor(Tenor, levels = names(treasury_symbols)),
-        # Converts Yield to actual % (for proper axis)
-        Yield = Yield/100) 
-    
     # Makes plotly line chart
-    plot_ly(plot_data, x = ~date, y = ~Yield, color = ~Tenor,
+    plot_ly(treasury_yields, x = ~date, y = ~rate, color = ~symbol,
             type = 'scatter', mode = 'lines') %>%
       layout(
         # Adds hover info for all tenors on that date
@@ -296,32 +289,6 @@ function(input, output, session) {
     
   })  
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-    
 
   
   # Bond Metrics tab reactive calculations (waits for user to run)
@@ -374,8 +341,24 @@ function(input, output, session) {
     
   #})
   
-  
-  
+  output$forward_curve <- renderPlot({
+    
+    quotes %>% ggplot2::ggplot(aes(x = maturity, y = rate)) +
+    ggplot2::geom_point(size = 3, color = "limegreen") +
+    ggplot2::geom_smooth(
+      method = "lm",
+      formula = y ~ splines::bs(x, knots = c(2, 5, 10), degree = 3),
+      se = FALSE,
+      color = "darkred",
+      linewidth = 1
+    ) + 
+      ggplot2::scale_x_continuous(breaks = c(round(quotes$maturity),0)) + 
+      ggplot2::scale_y_continuous(labels = scales::percent_format(accuracy = 0.2)) +
+      ggplot2::labs(y = "interest rate",
+                    x = "maturity (years from most recent Fed quotes)")
+      
+  })
+    
   
   
 }

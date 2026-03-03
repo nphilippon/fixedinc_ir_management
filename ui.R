@@ -19,8 +19,8 @@ dashboardPage(
                     plotlyOutput("hist_yield_chart", height = "400px"))
               ),
               fluidRow(
-                box(width = 12, title = "Daily Treasury Yield Data", status = "info",
-                    DTOutput("yieldTable"))
+                box(width = 12, title = "Forward Curve - as of most recent Fed quotes", status = "info",
+                    plotOutput("forward_curve"))
               )
       ),
       tabItem(tabName = "builder",

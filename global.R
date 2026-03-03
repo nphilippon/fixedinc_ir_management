@@ -41,31 +41,41 @@ get_treasury_data <- function(symbols, names, maturities, from = "1992-01-02", d
   # from: date to start pulling from, default is 1992-01-02
   # dim: Dimension, either "long" or "wide", default is long
   
-  tmp <- tq_get(symbols, get = "economic.data", from = from) %>%
+  output <- tq_get(symbols, get = "economic.data", from = from) %>%
     dplyr::mutate(
       maturity = maturities[match(symbol, symbols)],
       rate = price / 100) %>% 
     na.omit() %>% 
     arrange(date) %>% 
-    group_by(maturity) %>% 
     dplyr::select(symbol, maturity, date, rate)
-  
-  # Final formatting
-  if (dim == "wide") {
-    # User wants it wide
-    output <- tmp %>%
-      tidyr::pivot_wider(., names_from = symbol, values_from = price) %>%
-      dplyr::rename_with(~ names, 2:(length(names)+1)) # replaces the names for every column except date (hence the 2:length(names + 1)) because the names vector doesnt have date
-  }
-  else {
-    output <- tmp
-  }
   
   return(output)
 }
 
+
 # Pull data on launch
 treasury_yields <- get_treasury_data(treasury_symbols, maturities = treasury_maturities)
+
+treasury_yields_wide <- treasury_yields %>% 
+  dplyr::select(-maturity) %>% 
+  group_by(date) %>% 
+  tidyr::pivot_wider(., names_from = symbol, values_from = rate) %>%
+  dplyr::rename(
+    "1-Month" = "DGS1MO", 
+    "3-Month" = "DGS3MO", 
+    "6-Month" = "DGS6MO",
+    "1-Year" = "DGS1", 
+    "2-Year" = "DGS2", 
+    "3-Year" = "DGS3",
+    "5-Year" = "DGS5", 
+    "7-Year" = "DGS7", 
+    "10-Year" = "DGS10",
+    "20-Year" = "DGS20", 
+    "30-Year" = "DGS30") %>% 
+  dplyr::arrange(desc(date))
+    
+treasury_yields_named <- treasury_yields_wide %>% 
+  tidyr::pivot_longer(cols = -date, names_to = "symbol", values_to = "rate")
 
 # NOTE: CF function does not work properly rn, payments are made every 2 years instead of semi-annual
 # Create bond

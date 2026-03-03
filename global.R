@@ -330,16 +330,17 @@ treasury_yields <- get_treasury_data(treasury_symbols)
 #Portfolio Builder Functions
 
 
-add_row <- function(start, end, coupon, periodocity, FV, quantity){
+add_row <- function(p_price, start, end, coupon, periodocity, FV, quantity){
   
-  T2M <- as.numeric(as_date(end)) - as.numeric(as_date(Sys.Date()))
+  T2M <- round(as.numeric(as_date(end)) - as.numeric(as_date(Sys.Date())),4)
   
-  years <- (as.numeric(as_date(end)) - as.numeric(as_date(start)))/365
+  years <- round((as.numeric(as_date(end)) - as.numeric(as_date(start)))/365,4)
   
   
   
-  temp_build <- tibble::tibble(length = years,
-                               coupon_rate = coupon,
+  temp_build <- tibble::tibble(purchase_price = p_price,
+                               length = years,
+                               coupon_rate = coupon/100,
                                TTM = T2M,
                                N = periodocity,
                                Face_Value = FV,

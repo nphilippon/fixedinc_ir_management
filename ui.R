@@ -7,7 +7,8 @@ dashboardPage(
     sidebarMenu(
       menuItem("US Treasury Yield Data", tabName = "data", icon = icon("table")),
       menuItem("Portfolio Builder", tabName = "builder", icon = icon("wrench")),
-      menuItem("Bond Metrics Calculator", tabName = "metrics", icon = icon("circle-info"))
+      menuItem("Bond Metrics Calculator", tabName = "metrics", icon = icon("circle-info")),
+      menuItem("Risk Manager", tabName = "risk_manager", icon = icon("dollar-sign"))
     )
   ),
   dashboardBody(
@@ -68,12 +69,17 @@ dashboardPage(
                                 value = NULL,
                                 startview = "month"
                                 ),
+                      numericInput("build_p_price",
+                                   "Purchase Price",
+                                   value = 100,
+                                   min = 0,
+                                   step = 5),
                       numericInput("build_coupon",
                                    "Coupon Rate (%)",
                                    value = 0,
                                    min = 0,
                                    max = 100,
-                                   step = 0.01),
+                                   step = 0.5),
                       numericInput("build_periodicity",
                                    "Coupons Per Year",
                                    value = 1,
@@ -137,6 +143,21 @@ dashboardPage(
                     )
                 )
               )
+      ),
+      tabItem(tabName = "risk_manager",
+                fluidPage(
+                  sidebarLayout(
+                    sidebarPanel(),
+                    mainPanel()
+                  )
+                )
+      
+              
+              
+              
+              
+              
+              
         )
     )
   )

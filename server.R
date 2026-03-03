@@ -130,8 +130,10 @@ function(input, output, session) {
     periods <- isolate(input$build_periodicity)
     face_val <- isolate(input$build_FV)
     quantity <- isolate(input$build_quantity)
+    p_price <- isolate(input$build_p_price)
     
-    new_row <- add_row(start,
+    new_row <- add_row(p_price,
+                       start,
                        end,
                        coupon,
                        periods,

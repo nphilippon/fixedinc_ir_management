@@ -67,36 +67,6 @@ get_treasury_data <- function(symbols, names, maturities, from = "1992-01-02", d
 # Pull data on launch
 treasury_yields <- get_treasury_data(treasury_symbols, maturities = treasury_maturities)
 
-# OLD Function for getting and cleaning FRED data using Tidyquant (will delete)
-old_get_treasury_data <- function(symbols) {
-  raw_data <- symbols %>% 
-    # Only search for FRED symbol
-    as.character() %>% 
-    set_names() %>% 
-    # Loops through all symbols and gets data from 1992-01-02 on, because no data for 1992-01-01
-    # returns as long df with added col for corresponding symbol
-    # (This does take awhile, there might be a better way to do it? Or FRED API is just slow)
-    map_df(~tq_get(.x, get = "economic.data", from = "1992-01-02"), .id = "symbol")
-  
-  # Makes Map tibble for converting FRED symbols to clean names
-  symbol_map <- tibble(
-    symbol = as.character(symbols),
-    tenor = names(symbols)
-  )
-  
-  # Joins raw data with clean name map and converts to wide df of yields by date for each tenor
-  clean_data <- raw_data %>% 
-    left_join(symbol_map, by = "symbol") %>% 
-    select(date, tenor, price) %>% 
-    pivot_wider(names_from = tenor, values_from = price) %>% 
-    # Sorts by date descending
-    arrange(desc(date)) %>% 
-    # Fills missing dates with last available
-    fill(everything(), .direction = "up")
-  
-  return(clean_data)
-}
-
 # NOTE: CF function does not work properly rn, payments are made every 2 years instead of semi-annual
 # Create bond
 bond_cf <- function(start_date, end_date = NA, c, ytm,  T2M = 0, periodicity = 2, FV, quantity = 1) {
@@ -434,26 +404,16 @@ save_portfolio <- function(name, table){
 }
 
 #--- Cubic Spline interpolation and discount factor calcs below ---#
-
-quotes <- tq_get(treasury_symbols, get = "economic.data", from = Sys.Date() - 7)
-#need the maturity for the math, could be more robust but I manually converted the strings with "MO" since there was only 3 of them
-quote <- quotes %>% dplyr::mutate(
-  maturity = ifelse(quotes$`1-Month` == "DGS1MO", 1/12,
-                    ifelse(quotes$`1-Month` == "DGS3MO", 3/12,
-                           ifelse(quotes$`1-Month` == "DGS6MO", 6/12,
-                                  parse_number(quotes$`1-Month`)
-                           )))
-) %>% drop_na() %>% 
-  group_by(maturity)
 #need to know the most recent quotes, since our function can always build the forward curve given the most recent fed quotes
-recentday <- max(quote$date)
+recentday <- max(treasury_yields$date)
 
-recentquotes <- quote %>% dplyr::filter(date == recentday) %>% 
-  dplyr::select(maturity, price)
+quotes <- treasury_yields %>% dplyr::filter(date == recentday) %>%
+  dplyr::select(maturity, rate)
+
 #here is the model, inspired from fintechII notes
 spline <- stats::lm(
-  price ~ splines::bs(maturity, knots = c(2,5,10), degree = 3),
-  recentquotes
+  rate ~ splines::bs(maturity, knots = c(2,5,10), degree = 3),
+  quotes
 )
 #tested with fake data frame
 fakedf <- data.frame(date = as.Date(c("2026-06-01", "2028-01-01", "2032-01-01", "2040-08-01")), cf = c(1200, 100, 10000, 10000))

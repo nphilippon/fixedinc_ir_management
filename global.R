@@ -26,15 +26,29 @@ treasury_names <- c(
   "20-Year", "30-Year"
 )
 
+# This also needs to correspond 1:1
+treasury_maturities <- c(
+  round(1/12,3), 3/12, 6/12,
+  1, 2, 3,
+  5, 7, 10,
+  20, 30
+)
+
 # A function to pull the treasury data
-get_treasury_data <- function(symbols, names, from = "1992-01-02", dim = "long"){
+get_treasury_data <- function(symbols, names, maturities, from = "1992-01-02", dim = "long"){
   # Symbols: tickers for pulling, must be economic.data
   # Names: Vector. Names to swap out the tickers with, only compatible with wide df
   # from: date to start pulling from, default is 1992-01-02
   # dim: Dimension, either "long" or "wide", default is long
   
   tmp <- tq_get(symbols, get = "economic.data", from = from) %>%
-    dplyr::select(date, symbol, price)
+    dplyr::mutate(
+      maturity = maturities[match(symbol, symbols)],
+      rate = price / 100) %>% 
+    na.omit() %>% 
+    arrange(date) %>% 
+    group_by(maturity) %>% 
+    dplyr::select(symbol, maturity, date, rate)
   
   # Final formatting
   if (dim == "wide") {
@@ -50,8 +64,11 @@ get_treasury_data <- function(symbols, names, from = "1992-01-02", dim = "long")
   return(output)
 }
 
-# Function for getting and cleaning FRED data using Tidyquant
-get_treasury_data <- function(symbols) {
+# Pull data on launch
+treasury_yields <- get_treasury_data(treasury_symbols, maturities = treasury_maturities)
+
+# OLD Function for getting and cleaning FRED data using Tidyquant (will delete)
+old_get_treasury_data <- function(symbols) {
   raw_data <- symbols %>% 
     # Only search for FRED symbol
     as.character() %>% 
@@ -79,9 +96,6 @@ get_treasury_data <- function(symbols) {
   
   return(clean_data)
 }
-
-# Pull data on launch
-treasury_yields <- get_treasury_data(treasury_symbols)
 
 # NOTE: CF function does not work properly rn, payments are made every 2 years instead of semi-annual
 # Create bond
@@ -349,8 +363,8 @@ test_bond_ttm <- get_bond_ttm(settlement_date = "2016-01-01", maturity_date = "2
 test_bond_metrics <- get_bond_metrics(ttm = 10, yield = 0.05, c = 0.05)
 test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", ytm = 0.04, c = 0.05, FV = 100)
 
-# Pull US Treasury data on startup 
-treasury_yields <- get_treasury_data(treasury_symbols)
+# Pull US Treasury data on startup (OLD)
+## treasury_yields <- old_get_treasury_data(treasury_symbols)
 
 #Portfolio Builder Functions
 

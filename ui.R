@@ -145,12 +145,90 @@ dashboardPage(
               )
       ),
       tabItem(tabName = "risk_manager",
-                fluidPage(
-                  sidebarLayout(
-                    sidebarPanel(),
-                    mainPanel()
+              
+              
+              
+              
+              
+              
+              
+                fluidRow(
+                  column(
+                    4,
+                    box(
+                      title = "Risk Manager",
+                      status = "primary",
+                      id = "top_box_rm",
+                      collapsible = TRUE,
+                      solidHeader = T,
+                      width = 12,
+                      uiOutput("portfolio_list_rm"), #will try to use same logic as port builder,
+                      style = "background: rgb(224,224,224)"
+                    )
+                  ),
+                  column(
+                    8,
+                    valueBoxOutput("pv_rm"),
+                    valueBoxOutput("cashflow_rm"),
+                    valueBoxOutput("dailych_rm")
                   )
+                ),
+                fluidRow(
+                  column(
+                    4,
+                    fluidRow(
+                      column(
+                        6,
+                        actionButton("VaR_button",
+                                     "VaR",
+                                     style = "color: #FFFFFF; background-color: #006633; border-color: #000000",
+                                     width = "100%")
+                      ),
+                      column(
+                        6,
+                        actionButton("stress_rm__button",
+                                     "Stress Testing",
+                                     style = "color: #FFFFFF;background-color: #330066; border-color: #000000",
+                                     width = "100%")
+                      ),
+                    ),
+                    fluidRow(
+                    #Replacing all these with well panels that will be shown with a click of each button above.
+                       box(
+                         title = "VaR",
+                         status = "primary",
+                         style = "background: rgb(224,224,224)",
+                         solidHeader = T,
+                         width = 12,
+                         collapsible = TRUE,
+                         numericInput("confidence_rm",
+                                      "Confidence ($)",
+                                      value = 5,
+                                      min = 0,
+                                      max = 100,
+                                      step = 2.5)
+                       ),
+                       box(
+                         title = "Stress Test",
+                         status = "primary",
+                         style = "background: rgb(224,224,224)",
+                         solidHeader = T,
+                         width = 12,
+                         collapsible = TRUE,
+                         numericInput("basis_ch_rm",
+                                      "Basis Point Change",
+                                      value = 0,
+                                      step = 1)
+                       )
+                    )
                 )
+                  
+                
+                
+                
+                
+              )
+              
       
               
               

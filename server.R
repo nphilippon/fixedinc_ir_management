@@ -140,7 +140,7 @@ function(input, output, session) {
       
     }else{
       
-      temp_table$data <- rbind(temp_table$data, new_row)
+        temp_table$data <- rbind(temp_table$data, new_row)
       
     }
   
@@ -154,13 +154,24 @@ function(input, output, session) {
   
   #Showing Existing Portfolio Immediately with following:
 
-  output$portfolio_list <- renderUI({
-    
+  
+  output$portfolio_list <- renderUI({ #For Portfolio Builder
+      selectInput("portfolio_list",
+                  "Choose Portfolio",
+                  choices = names(updating_list$data))
+  
+  })
+  
+
+  output$portfolio_list_rm <- renderUI({ #For Risk Manager
     selectInput("portfolio_list",
                 "Choose Portfolio",
                 choices = names(updating_list$data))
     
   })
+  
+  
+  
   
   
   observeEvent(input$existing_port_pull, {
@@ -289,6 +300,66 @@ function(input, output, session) {
     
   })  
   
+  
+  
+  #Risk Manager Output
+  
+  
+  #BOXES AT THE TOP
+  
+  output$pv_rm <- renderValueBox({
+    valueBox(
+      value = 120, #switch with reactive portfolio value here
+      subtitle = "Portfolio Value",
+      icon = icon("chart-line"),
+      color = "navy"
+    )
+    
+  })
+  
+  
+  output$cashflow_rm <- renderValueBox({
+    valueBox(
+      value = 200, #switch with reactive portfolio value here
+      subtitle = "Next Cashflow",
+      icon = icon("dollar-sign"),
+      color = "maroon"
+    )
+    
+  })
+  
+  
+  output$dailych_rm <- renderValueBox({
+    valueBox(
+      value = 3, #switch with reactive portfolio value here
+      subtitle = "Daily Change ($)",
+      icon = icon("plus-minus"),
+      color = "olive"
+    )
+    
+  })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+    
 
   
   # Bond Metrics tab reactive calculations (waits for user to run)

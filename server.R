@@ -60,6 +60,51 @@ function(input, output, session) {
       )
   })
   
+  # Historical Duration Chart
+  
+  output$hist_duration_chart <- renderPlotly({
+    req(treasury_yields_metrics)
+    
+    # Custom Colour Palette
+    plot_colors <- c(
+      "#ffa600","#488f31", "#83af70", "#bad0af", 
+      "#003f5c","#2f4b7c", "#665191", "#a05195")
+    
+    duration_plot_data <- treasury_yields_metrics %>% 
+      dplyr::mutate(
+        tenor = treasury_names[match(maturity, treasury_maturities)],
+        tenor = factor(tenor, levels = treasury_names),
+        duration = round(duration, digits = 4)
+      ) %>% 
+      filter(maturity > 0.5) %>% 
+      select(date, duration, tenor)
+    
+    plot_ly(duration_plot_data, x = ~date, y = ~duration, color = ~tenor,
+            type = 'scatter', mode = 'lines', colors = plot_colors) %>%
+      layout(
+        # Adds hover info for all tenors on that date
+        hovermode = "x unified",
+        xaxis = list(
+          title = "Date",
+          # Removes gridlines
+          showgrid = FALSE,
+          # Adds tick marks
+          ticks = "outside",
+          # Makes hover title show full date
+          hoverformat = "%b %d, %Y"),
+        yaxis = list(
+          title = "Macaulay Duration",
+          # Format as X.XX
+          tickformat = "X.XX",
+          # Removes gridlines
+          showgrid = FALSE,
+          # Adds axis line with tick marks every 2
+          showline = TRUE, ticks = "outside", dtick = 2,
+          # Sets min y-axis to 0 and adds line
+          rangemode = "tozero", zeroline = TRUE)
+      )
+  }) 
+    
   
   #Portfolio Builder Section Below
   

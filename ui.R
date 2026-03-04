@@ -21,6 +21,10 @@ dashboardPage(
               fluidRow(
                 box(width = 12, title = "Forward Curve - as of most recent Fed quotes", status = "info",
                     plotOutput("forward_curve"))
+              ),
+              fluidRow(
+                box(width = 12, title = "Historical Duration", status = "info",
+                    plotlyOutput("hist_duration_chart", height = "400px"))
               )
       ),
       tabItem(tabName = "builder",

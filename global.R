@@ -106,7 +106,9 @@ get_yield_metrics <- function(yields, m = 2, price = 100) {
   return(yields_metrics)
 }
 
-treasury_yields_metrics <- get_yield_metrics(treasury_yields)
+# treasury_yields_metrics <- get_yield_metrics(treasury_yields)   <---- THIS TAKES FOREVER, until we implement it as a .cpp
+                                                                      # function I would only run it if you have to
+                                                                            
 
 # NOTE: CF function does not work properly rn, payments are made every 2 years instead of semi-annual
 # Create bond

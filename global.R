@@ -91,7 +91,14 @@ get_yield_metrics <- function(yields, m = 2, price = 100) {
       # Coupon Rate and Price (hardcoded for now)
       m = m, price = price) %>% 
     ungroup() %>%
-    dplyr::select(maturity, date, rate, changeBasisPoints, m, price)
+    rowwise() %>% 
+    # I had to do these in a separate mutate because it has to do it by row not groups
+    dplyr::mutate(
+      # Macaulay Duration
+      duration = get_bond_metrics(ttm = maturity, yield = rate, c = rate)$macaulay_duration,
+      # Replaces NaN (for tenors <0.5 yrs) with 0  (I think this is correct bc theres no coupon payments? not 100% sure)
+      across(duration , ~replace(., is.nan(.), 0))) %>% 
+    dplyr::select(maturity, date, rate, changeBasisPoints, m, price, duration)
   
   return(yields_metrics)
 }

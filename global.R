@@ -96,19 +96,21 @@ get_yield_metrics <- function(yields, m = 2, price = 100) {
     dplyr::mutate(
       # Macaulay Duration
       duration = get_bond_metrics(ttm = maturity, yield = rate, c = rate)$macaulay_duration,
+      # Convexity
+      convexity = get_bond_metrics(ttm = maturity, yield = rate, c = rate)$convexity,
       # Replaces NaN (for tenors <0.5 yrs) with 0  (I think this is correct bc theres no coupon payments? not 100% sure)
-      across(duration , ~replace(., is.nan(.), 0)),
+      across(c(duration,convexity) , ~replace(., is.nan(.), 0)),
       # Delta
-      delta = get_bond_metrics(ttm = maturity, yield = rate, c = rate)$delta_central_approx
+      delta = get_bond_metrics(ttm = maturity, yield = rate, c = rate)$delta_central_approx,
+      # Gamma
+      gamma = get_bond_metrics(ttm = maturity, yield = rate, c = rate)$gamma_approx
+      
       ) %>% 
-    dplyr::select(maturity, date, rate, changeBasisPoints, m, price, duration, delta)
+    dplyr::select(maturity, date, rate, changeBasisPoints, m, price, duration, convexity, delta, gamma)
   
   return(yields_metrics)
 }
 
-# treasury_yields_metrics <- get_yield_metrics(treasury_yields)   <---- THIS TAKES FOREVER, until we implement it as a .cpp
-                                                                      # function I would only run it if you have to
-                                                                            
 
 # NOTE: CF function does not work properly rn, payments are made every 2 years instead of semi-annual
 # Create bond
@@ -376,8 +378,9 @@ test_bond_ttm <- get_bond_ttm(settlement_date = "2016-01-01", maturity_date = "2
 test_bond_metrics <- get_bond_metrics(ttm = 10, yield = 0.05, c = 0.05)
 test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", ytm = 0.04, c = 0.05, FV = 100)
 
-# Pull US Treasury data on startup (OLD)
-## treasury_yields <- old_get_treasury_data(treasury_symbols)
+treasury_yields_metrics <- get_yield_metrics(treasury_yields)   # <----  THIS TAKES FOREVER, until we implement it as a .cpp
+                                                                # function I would only run it if you have to
+
 
 #Portfolio Builder Functions
 

@@ -11,6 +11,10 @@ library(bslib)
 library(rstudioapi) #using this to set working directory to wherever this file is located (I think there may be something better)
 library(splines)
 library(RcppRoll)
+library(Rcpp)
+
+# C++ Calculation Function
+sourceCpp("bond_calcs.cpp")
 
 # FRED US Treasury Symbols
 treasury_symbols <- c(
@@ -83,37 +87,42 @@ get_yield_metrics <- function(yields, m = 2, price = 100) {
   # yields: dataframe containing yield data with cols maturity, date, rate
   # m: coupon rate (defaults to 2)
   # price: bond price (defaults to 100)
-  yields_metrics <- yields %>% 
+  
+  # Get simple metrics using R
+  yields_simple_metrics <- yields %>% 
     group_by(maturity) %>% 
     arrange(date) %>% 
-    # TEMPORARY FILTER
-    filter(
-      maturity == 2
-    ) %>%
     dplyr::mutate(
       # Daily change (in bps)
       changeBasisPoints = (rate - lag(rate)) * 10000,
-      # Coupon Rate and Price (hardcoded for now)
-      m = m, price = price,
       # Standard Deviation
       sd = roll_sd(changeBasisPoints, n = 4, align = "right", fill = NA)
       ) %>% 
-    ungroup() %>%
-    rowwise() %>% 
-    # I had to do these in a separate mutate because it has to do it by row not groups
-    dplyr::mutate(
-      # Macaulay Duration
-      duration = get_bond_metrics(ttm = maturity, yield = rate, c = rate)$macaulay_duration,
-      # Convexity
-      convexity = get_bond_metrics(ttm = maturity, yield = rate, c = rate)$convexity,
-      # Replaces NaN (for tenors <0.5 yrs) with 0  (I think this is correct bc theres no coupon payments? not 100% sure)
-      across(c(duration,convexity) , ~replace(., is.nan(.), 0)),
-      # Delta
-      delta = get_bond_metrics(ttm = maturity, yield = rate, c = rate)$delta_central_approx,
-      # Gamma
-      gamma = get_bond_metrics(ttm = maturity, yield = rate, c = rate)$gamma_approx
+    ungroup()
+  
+  # Get more complex metrics using C++ function
+  yields_complex_metrics <- cpp_get_portfolio_metrics(
+    ttm = yields_simple_metrics$maturity,
+    yield = yields_simple_metrics$rate,
+    c = yields_simple_metrics$rate,   # ASSUMES COUPON RATE = YIELD
+    FV = price,
+    periodicity = m
+  )
+  
+  # Combine 
+  yields_metrics <- yields_simple_metrics %>% 
+    bind_cols(yields_complex_metrics) %>% 
+    mutate(
+      # Set NAs to 0 and renames cols
+      duration = ifelse(is.na(macaulay_duration), 0, macaulay_duration),
+      convexity = ifelse(is.na(convexity), 0, convexity),
+      delta = ifelse(is.na(delta_central_approx), 0, delta_central_approx),
+      gamma = ifelse(is.na(gamma_approx), 0, gamma_approx),
       
-      ) %>% 
+      # Add back constant columns (to match 5.2 df)
+      m = m,
+      price = price
+    ) %>% 
     dplyr::select(maturity, date, rate, changeBasisPoints, sd, m, price, duration, convexity, delta, gamma)
   
   return(yields_metrics)
@@ -304,86 +313,9 @@ get_bond_ttm <- function(settlement_date, maturity_date) {
 }
 
 
-# Function for calculating bond metrics
-get_bond_metrics <- function(ttm, FV = 100, yield, c, periodicity = 2) {
-  # ttm: time to maturity
-  # FV: face/par value of bond (defaults to 100)
-  # yield: yield of bond (decimal format)
-  # c: coupon rate of bond (decimal format)
-  # periodicity: coupon payment frequency (defaults to 2, semi-annual)
-  
-  # Calculate # of payment periods remaining
-  n_pmt_periods <- floor(ttm * periodicity)
-  
-  # Calculate time of each coupon payment (in years from settlement date)
-  pmt_times <- seq(from = 1/periodicity, length.out = n_pmt_periods, by = 1/periodicity)
-  # Set last payment to maturity date
-  pmt_times[length(pmt_times)] <- ttm
-  
-  # Calculate Coupon payment
-  c_pmt <- (FV * c)/periodicity
-  # Generate Cash Flow stream
-  cashflows <- rep(c_pmt, length(pmt_times))
-  # Add final bond redemption cash flow
-  cashflows[length(cashflows)] <- cashflows[length(cashflows)] + FV
-  
-  # Calculate PV of Cash Flows for entered yield
-  pv_cashflows <- cashflows * (1/ (1 + yield/periodicity)^(periodicity * pmt_times))
-  
-  # Internal function for repricing bond given yield
-  get_bond_price <- function(yield) {
-    # Calculate PV of Cash Flows
-    pv_cashflows <- cashflows * (1/ (1 + yield/periodicity)^(periodicity * pmt_times))
-    # Calculate bond price (sum of cash flow PVs)
-    bond_price <- sum(pv_cashflows)
-  }
-  
-  # Calculate bond price using function above
-  bond_price <- get_bond_price(yield) 
-  
-  # Traditional Bond Metrics
-  # Calculate Macaulay Duration
-  macaulay_duration <- sum(pmt_times * pv_cashflows) / bond_price
-  # Calculate Modified Duration
-  modified_duration <- macaulay_duration / (1 + yield/periodicity)
-  # Calculate Convexity
-  convexity <- sum(pmt_times * (pmt_times + 1/periodicity) * pv_cashflows) / (bond_price * (1 + yield / periodicity)^2)
-  
-  # Modern Bond Metrics
-  # Re-Price with plus and minus step size 
-  step_size = 0.0001 # Set to 1bp (0.01%)
-  price_plus <- get_bond_price(yield + step_size)
-  price_minus <- get_bond_price(yield - step_size)
-  
-  # Calculate Delta Approximation (Central Difference Method)
-  delta_central_approx = (price_plus - price_minus) / (2 * step_size) / 10000
-  # Calculate Delta Approximation (Forward Difference Method)
-  delta_forward_approx = (price_plus - bond_price) / step_size / 10000
-  
-  # Calculate Gamma Approximation
-  gamma_approx = 0.5 * ((price_plus - 2 * bond_price + price_minus) / step_size^2) / 10000^2
-  
-  
-  return(list(
-    n_pmt_periods = n_pmt_periods,
-    pmt_times = pmt_times,
-    c_pmt = c_pmt,
-    cashflows = cashflows,
-    pv_cashflows = pv_cashflows,
-    bond_price = bond_price,
-    macaulay_duration = macaulay_duration,
-    modified_duration = modified_duration,
-    convexity = convexity,
-    price_plus = price_plus,
-    price_minus = price_minus,
-    delta_central_approx = delta_central_approx,
-    delta_forward_approx = delta_forward_approx,
-    gamma_approx = gamma_approx))
-}
-
 # Testing functions
 test_bond_ttm <- get_bond_ttm(settlement_date = "2016-01-01", maturity_date = "2026-01-01")
-test_bond_metrics <- get_bond_metrics(ttm = 10, yield = 0.05, c = 0.05)
+test_bond_metrics <- cpp_get_bond_metrics(ttm = 10, yield = 0.05, c = 0.05)
 test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", ytm = 0.04, c = 0.05, FV = 100)
 
 treasury_yields_metrics <- get_yield_metrics(treasury_yields)   # <----  THIS TAKES FOREVER, until we implement it as a .cpp

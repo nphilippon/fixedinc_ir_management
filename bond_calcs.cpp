@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include <cmath>
+#include <vector>
 
 using namespace Rcpp;
 
@@ -11,7 +12,7 @@ List cpp_get_bond_metrics(double ttm, double yield, double c, double FV = 100.0,
   if (n < 1)
     return List::create(); // Exits early if no coupon payments remaining (ie bond is expired)
   
-  // Set up blank output columns of length n (pre-allocates memory)
+  // Set up output vectors of length n (pre-allocates memory)
   NumericVector pmt_times(n);
   NumericVector cashflows(n);
   NumericVector pv_cashflows(n);
@@ -97,7 +98,7 @@ DataFrame cpp_get_portfolio_metrics(NumericVector ttm, NumericVector yield, Nume
   
   int n_bonds = ttm.size(); // Number of bonds to calculate metrics for
   
-  // Set up blank output columns of length n_bonds (pre-allocates memory)
+  // Set up output vectors of length n_bonds (pre-allocates memory)
   NumericVector price(n_bonds);
   NumericVector macaulay_duration(n_bonds);
   NumericVector modified_duration(n_bonds);
@@ -154,3 +155,67 @@ DataFrame cpp_get_portfolio_metrics(NumericVector ttm, NumericVector yield, Nume
     Named("gamma_approx") = gamma_approx
     );
 }
+
+
+//' Function for creating df of bond payments
+// [[Rcpp::export]]
+DataFrame cpp_get_portfolio_cfs(DateVector start_dates, DateVector end_dates, 
+                                NumericVector coupons, NumericVector periodicities, 
+                                NumericVector face_values, NumericVector quantities) {
+  
+  // Setting up dynamic length output vectors
+  std::vector<Date> output_dates; 
+  std::vector<double> output_cfs;
+  std::vector<int> output_bond_ids;
+  
+  int n_bonds = start_dates.size(); // number of bonds to get cashflows for
+  
+  // Loop through each bond
+  for (int i = 0; i < n_bonds; ++i) {
+    
+    // Initial Calculations
+    double coupon_pmt = (coupons[i] / periodicities[i]) * face_values[i] * quantities[i]; // Calc coupon payment
+    double final_pmt = coupon_pmt + (face_values[i] * quantities[i]); // Calc final payment (coupon + FV)
+    
+    int months_between = 12 / periodicities[i]; 
+    int days_between = std::round(365.25 / periodicities[i]); 
+    // Note: months_between is unused rn because we are just adding approx dates, but keeping it
+    // for when I figure out how to add actual exact dates
+  
+    
+    // Initialize Date counters
+    Date current_date = start_dates[i];
+    Date end_date = end_dates[i];
+    
+    // Loop through each payment date
+    while (current_date <= end_date) {
+      output_bond_ids.push_back(i + 1); // Adds a new row with the id for this bond
+      output_dates.push_back(current_date); // Adds a new row with this payment date
+      
+      if (current_date == end_date) {
+        output_cfs.push_back(final_pmt); // if this is the last payment date, add row with final payment
+      } else {
+        output_cfs.push_back(coupon_pmt); // if not, add new row with coupon pmt
+      }
+      
+      // Increment date 
+      current_date = current_date + days_between; 
+      
+      // Checks to make sure we didn't skip over the end date bc of rounding
+      if (current_date > end_date && output_dates.back() < end_date) {
+        current_date = end_date; // if we did, set payment date back to end date
+      }
+    }
+  }
+  // Returns as long format df (wrap() converts them from std::vectors to vectors that can be read by R)
+  return DataFrame::create(
+    Named("bond_id") = wrap(output_bond_ids),
+    Named("date") = wrap(output_dates),
+    Named("cf") = wrap(output_cfs)
+  );
+}
+  
+  
+  
+  
+  

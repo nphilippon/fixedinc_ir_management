@@ -252,6 +252,24 @@ TEST_BOND_CFS <- bond_cfs(start_dates = c("2026-01-01", "2025-06-19", "2024-12-2
                           face_values = c(100000, 200000, 300000, 400000), 
                           quantities = c(1, 2, 3, 4))
 )
+
+# Function for getting bond cashflows with C++ function
+get_bond_cfs <- function(start_dates, end_dates, coupons, periodicities, face_values, quantities) {
+  
+  # Get long cashflows df from c++ function
+  bond_cfs_long <- cpp_get_portfolio_cfs(as.Date(start_dates), as.Date(end_dates), 
+                                         as.numeric(coupons), as.integer(periodicities),
+                                         as.numeric(face_values), as.numeric(quantities))
+  
+}
+
+test_cpp_bond_cfs <- get_bond_cfs(start_dates = c("2026-01-01", "2025-06-19", "2024-12-25", "2023-04-22"), 
+                              end_dates = c("2032-12-31", "2028-02-14", "2029-12-24", "2031-01-01"), 
+                              coupons = c(0.05, 0.09, 0.04, 0.12), 
+                              periodicities = c(2, 2, 2, 2), 
+                              face_values = c(100000, 200000, 300000, 400000), 
+                              quantities = c(1, 2, 3, 4))
+
 # Function for calculating TTM (moved to its own so we can use either dates or ttm input)
 get_bond_ttm <- function(settlement_date, maturity_date) {
   # settlement_date: date of bond ownership transfer
@@ -265,7 +283,7 @@ get_bond_ttm <- function(settlement_date, maturity_date) {
 # Testing functions
 test_bond_ttm <- get_bond_ttm(settlement_date = "2016-01-01", maturity_date = "2026-01-01")
 test_bond_metrics <- cpp_get_bond_metrics(ttm = 10, yield = 0.05, c = 0.05)
-test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", ytm = 0.04, c = 0.05, FV = 100)
+# test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", ytm = 0.04, c = 0.05, FV = 100)
 
 treasury_yields_metrics <- get_yield_metrics(treasury_yields)   # <----  THIS TAKES FOREVER, until we implement it as a .cpp
                                                                 # function I would only run it if you have to

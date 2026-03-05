@@ -128,7 +128,7 @@ get_yield_metrics <- function(yields, m = 2, price = 100) {
   return(yields_metrics)
 }
 
-# Big ass function below
+# OLD BOND_CFS FUNCTION (HAS BEEN MOVED TO C++) - WILL DELETE SOON
 bond_cfs <- function(start_dates, end_dates, coupons, periodicities, face_values, quantities) {
   # Start_dates: Vector, starting dates (first payments), in date format for all the bonds
   # End_dates: Vector, ending dates (final payments), in date format for all the bnods
@@ -244,17 +244,23 @@ bond_cfs <- function(start_dates, end_dates, coupons, periodicities, face_values
   return(output_df)
 }
 
-system.time(
-TEST_BOND_CFS <- bond_cfs(start_dates = c("2026-01-01", "2025-06-19", "2024-12-25", "2023-04-22"), 
-                          end_dates = c("2032-12-31", "2028-02-14", "2029-12-24", "2031-01-01"), 
-                          coupons = c(0.05, 0.09, 0.04, 0.12), 
-                          periodicities = c(2, 2, 2, 2), 
-                          face_values = c(100000, 200000, 300000, 400000), 
-                          quantities = c(1, 2, 3, 4))
-)
+#system.time(
+#TEST_BOND_CFS <- #bond_cfs(start_dates = c("2026-01-01", "2025-06-19", "2024-12-25", "2023-04-22"), 
+                          #end_dates = c("2032-12-31", "2028-02-14", "2029-12-24", "2031-01-01"), 
+                          #coupons = c(0.05, 0.09, 0.04, 0.12), 
+                          #periodicities = c(2, 2, 2, 2), 
+                         # face_values = c(100000, 200000, 300000, 400000), 
+                         # quantities = c(1, 2, 3, 4))
+#)
 
 # Function for getting bond cashflows with C++ function
 get_bond_cfs <- function(start_dates, end_dates, coupons, periodicities, face_values, quantities) {
+  # Start_dates: Vector, starting dates (first payments), in date format for all the bonds
+  # End_dates: Vector, ending dates (final payments), in date format for all the bonds
+  # Coupons: Vector, numerical coupon rates for the bonds (MUST BE SAME TIME FRAME COMPOUNDING)
+  # Periodicities: Vector, numerical. Number of payments within a year.
+  # Face_values: Vector, numerical. Face value of each individual bond. 
+  # Quantities: Vector, numerical amount of each bond owned in the portfolio
   
   # Get long cashflows df from c++ function
   bond_cfs_long <- cpp_get_portfolio_cfs(as.Date(start_dates), as.Date(end_dates), 

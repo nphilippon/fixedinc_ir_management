@@ -182,7 +182,6 @@ DataFrame cpp_get_portfolio_cfs(DateVector start_dates, DateVector end_dates,
     // Note: months_between is unused rn because we are just adding approx dates, but keeping it
     // for when I figure out how to add actual exact dates
   
-    
     // Initialize Date counters
     Date current_date = start_dates[i];
     Date end_date = end_dates[i];

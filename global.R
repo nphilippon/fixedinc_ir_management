@@ -128,73 +128,7 @@ get_yield_metrics <- function(yields, m = 2, price = 100) {
   return(yields_metrics)
 }
 
-
-# NOTE: CF function does not work properly rn, payments are made every 2 years instead of semi-annual
-# Create bond
-bond_cf <- function(start_date, end_date = NA, c, ytm,  T2M = 0, periodicity = 2, FV, quantity = 1) {
-  # Start_date: beginning date for the bond, the inception and first payment date (CRITICAL)
-  # End date: date when last payment is made
-  # C: coupon RATE (%) for CF stuff
-  # ytm: Yield to market rate.
-  # T2M: user can provide either start and end date, or just start date and T2M. Defaults to 0, in years.
-  # Periodicity: number of payments per year, default semi-annual payments 
-  # FV: face value
-  # Quantity: How many of those bonds do you have, defaults to 1.
-  
-  
-  # Makes sure the start and end dates are actually dates
-  start_date <- as.Date(start_date)
-  end_date <- as.Date(end_date)
-  
-  # 2 different seq.Dates because it can either be start date + T2M or start to end date
-  if (T2M != 0 & is.na(end_date)){
-    date_col <- seq.Date(start_date, start_date + years(T2M), by = "day")
-  }
-  else {
-    date_col <- seq.Date(start_date, end_date, by = "day")
-  }
-  
-  
-  # Gets the notional value of payments, just coupon * Face value * quantity.
-  payment_notional <- FV * (c / periodicity) * quantity
-  
-  # Gets payment months
-  # Assumes first payment is on the START DATE !!!
-  months_between <- 12 / periodicity # How many months between payments
-  start_month <- month(start_date) # Month of the starting date
-  start_day <- day(start_date) # Day of the starting date
-  
-  pmt_months <- c() # initializes empty vector, this gets filled by the for loop below
-  
-  for (num in seq(1, periodicity)) {
-    # vector that contains the numerical value of the payment months.
-    # start_month is the month of the start_date input
-    # months_betweeen is how many months between payments, its multiplied by
-    # num because we need 3 (3 * 1) months, then 6 (3 * 2) months, then 9 (3 * 3), then 12 (3 * 4) months ahead
-    # mod 12 because im not silly and remembered there are 12 months in a year
-    pmt_months[num] <- (start_month + (months_between * (num - 1))) %% 12
-  }
-  
-  # Initializes the output df, just has date to starat becuase its easy
-  output_df <- data.frame(date = date_col)
-  
-  # Adds in all the pther columns we need.
-  output_df <- output_df %>%
-    dplyr::mutate(
-      payment = case_when(
-      date == end_date ~ payment_notional + FV, # Last payment
-      month(date) %% 12 %in% pmt_months & day(date) == day(start_date) ~ payment_notional, # %% 12 because we want 12 to be 0.
-      TRUE ~ 0 # Non-payment days
-    ),
-    T2M = as.numeric(difftime(end_date, date, units = "days"))/365, # Difference between end and today, in years
-    years_past = as.numeric(difftime(date, start_date, units = "day"))/365, # Difference between start and today, in years
-    discount_factor = 1 / (1 + ytm/periodicity)^(years_past*periodicity), # Discount facotr for the cashflows
-    pv_cf = payment * discount_factor) %>% # Present value of the cf
-    dplyr::filter(payment != 0)
-  
-  return(output_df)
-}
-
+# Big ass function below
 bond_cfs <- function(start_dates, end_dates, coupons, periodicities, face_values, quantities) {
   # Start_dates: Vector, starting dates (first payments), in date format for all the bonds
   # End_dates: Vector, ending dates (final payments), in date format for all the bnods
@@ -223,22 +157,22 @@ bond_cfs <- function(start_dates, end_dates, coupons, periodicities, face_values
   # -----------------------------------------------------------------------------------------
   
   
-  # Initializes and fills out vector of payment amounts in notional terms.
-  payment_notional <- c()
-  for (bond in 1:length(quantities)){
-    # formula is: (c/m) * FV * Quantity
-    payment_notional[bond] <- (coupons[bond]/periodicities[bond]) * face_values[bond] * quantities[bond]
-  }
-  # ----------------------------------------------------------------------
-  
-  # Initializes and fills out vector of payment months (this is a critical part, please read carefully beore changing shit)
-  payment_months <- list()
-  for (bond in 1:length(quantities)){
-    months_between <- 12/periodicities[bond] # How many months between payments
-    start_month <- as.numeric(month(start_dates[bond])) %% 12 # Month of the first payment
-    
-    payment_months[[bond]] <- unique(seq(start_month, start_month + 12, by = months_between) %% 12)
-  }
+  # # Initializes and fills out vector of payment amounts in notional terms.
+  # payment_notional <- c()
+  # for (bond in 1:length(quantities)){
+  #   # formula is: (c/m) * FV * Quantity
+  #   payment_notional[bond] <- (coupons[bond]/periodicities[bond]) * face_values[bond] * quantities[bond]
+  # }
+  # # ----------------------------------------------------------------------
+  # 
+  # # Initializes and fills out vector of payment months (this is a critical part, please read carefully beore changing shit)
+  # payment_months <- list()
+  # for (bond in 1:length(quantities)){
+  #   months_between <- 12/periodicities[bond] # How many months between payments
+  #   start_month <- as.numeric(month(start_dates[bond])) %% 12 # Month of the first payment
+  #   
+  #   payment_months[[bond]] <- unique(seq(start_month, start_month + 12, by = months_between) %% 12)
+  # }
   # -----------------------------------------------------------------------------------------------------------------------
   
   # Initalizes date column for the df!!!!
@@ -247,8 +181,23 @@ bond_cfs <- function(start_dates, end_dates, coupons, periodicities, face_values
   
   # Creates the bond cashflow columns, its complicated becuase they all need to be 
   # O(n^2) is bad i know, im sorry D:
+  
+  # Initializes and fills out vector of payment amounts in notional terms.
+  payment_notional <- c()
+  
+  # Initializes and fills out vector of payment months (this is a critical part, please read carefully beore changing shit)
+  payment_months <- list()
+  
   bond_columns <- list()
   for (num in 1:length(quantities)){
+    
+    payment_notional[num] <- (coupons[num]/periodicities[num]) * face_values[num] * quantities[num]
+    
+    months_between <- 12/periodicities[num] # How many months between payments
+    start_month <- as.numeric(month(start_dates[num])) %% 12 # Month of the first payment
+    
+    payment_months[[num]] <- unique(seq(start_month, start_month + 12, by = months_between) %% 12)
+    
     bond <- c() # Empty vector that gets updated then added to the whole list of other bonds, it gets reset every time
     
     # Sets all the bond-dependant variables for ease of reading and debugging. 

@@ -10,6 +10,7 @@ library(shinyjs)
 library(bslib)
 library(rstudioapi) #using this to set working directory to wherever this file is located (I think there may be something better)
 library(splines)
+library(RcppRoll)
 
 # FRED US Treasury Symbols
 treasury_symbols <- c(
@@ -85,11 +86,18 @@ get_yield_metrics <- function(yields, m = 2, price = 100) {
   yields_metrics <- yields %>% 
     group_by(maturity) %>% 
     arrange(date) %>% 
+    # TEMPORARY FILTER
+    filter(
+      maturity == 2
+    ) %>%
     dplyr::mutate(
       # Daily change (in bps)
       changeBasisPoints = (rate - lag(rate)) * 10000,
       # Coupon Rate and Price (hardcoded for now)
-      m = m, price = price) %>% 
+      m = m, price = price,
+      # Standard Deviation
+      sd = roll_sd(changeBasisPoints, n = 4, align = "right", fill = NA)
+      ) %>% 
     ungroup() %>%
     rowwise() %>% 
     # I had to do these in a separate mutate because it has to do it by row not groups
@@ -106,7 +114,7 @@ get_yield_metrics <- function(yields, m = 2, price = 100) {
       gamma = get_bond_metrics(ttm = maturity, yield = rate, c = rate)$gamma_approx
       
       ) %>% 
-    dplyr::select(maturity, date, rate, changeBasisPoints, m, price, duration, convexity, delta, gamma)
+    dplyr::select(maturity, date, rate, changeBasisPoints, sd, m, price, duration, convexity, delta, gamma)
   
   return(yields_metrics)
 }

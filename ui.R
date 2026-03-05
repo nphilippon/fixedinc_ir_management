@@ -23,8 +23,12 @@ dashboardPage(
                     plotOutput("forward_curve"))
               ),
               fluidRow(
-                box(width = 12, title = "Historical Duration", status = "info",
-                    plotlyOutput("hist_duration_chart", height = "400px"))
+                box(width = 12, title = "Duration", status = "info",
+                    plotlyOutput("hist_duration_chart", height = "300px"))
+              ),
+              fluidRow(
+                box(width = 12, title = "Delta", status = "info",
+                    plotlyOutput("hist_delta_chart", height = "300px"))
               )
       ),
       tabItem(tabName = "builder",

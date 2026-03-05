@@ -104,7 +104,53 @@ function(input, output, session) {
           rangemode = "tozero", zeroline = TRUE)
       )
   }) 
+
+  
+  # Historical Delta Chart
+  output$hist_delta_chart <- renderPlotly({
+    req(treasury_yields_metrics)
     
+    # Custom Colour Palette
+    plot_colors <- c(
+      "#ffa600","#488f31", "#83af70", "#bad0af", 
+      "#003f5c","#2f4b7c", "#665191", "#a05195")
+    
+    delta_plot_data <- treasury_yields_metrics %>% 
+      dplyr::mutate(
+        tenor = treasury_names[match(maturity, treasury_maturities)],
+        tenor = factor(tenor, levels = treasury_names),
+        delta = round(delta, digits = 4)
+      ) %>% 
+      filter(maturity > 0.5) %>% 
+      select(date, delta, tenor)
+    
+    plot_ly(delta_plot_data, x = ~date, y = ~delta, color = ~tenor,
+            type = 'scatter', mode = 'lines', colors = plot_colors) %>%
+      layout(
+        # Adds hover info for all tenors on that date
+        hovermode = "x unified",
+        xaxis = list(
+          title = "Date",
+          # Removes gridlines
+          showgrid = FALSE,
+          # Adds tick marks
+          ticks = "outside",
+          # Makes hover title show full date
+          hoverformat = "%b %d, %Y",
+          # Adds like to bottom
+          showline = TRUE),
+        yaxis = list(
+          title = "Delta (Central Approximation)",
+          # Format as X.XXXX
+          tickformat = ".4f",
+          # Removes gridlines
+          showgrid = FALSE,
+          # Adds axis line with tick marks every 0.05
+          showline = TRUE, ticks = "outside", dtick = 0.05,
+          # Sets min y-axis to 0 and adds line
+          zeroline = FALSE)
+      )
+  }) 
   
   #Portfolio Builder Section Below
   

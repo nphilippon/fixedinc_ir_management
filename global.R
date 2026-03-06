@@ -8,10 +8,6 @@ library(RTL)
 library(plotly)
 library(shinyjs)
 library(bslib)
-<<<<<<< Updated upstream
-=======
-#library(rstudioapi) #using this to set working directory to wherever this file is located (I think there may be something better)
->>>>>>> Stashed changes
 library(splines)
 library(RcppRoll)
 library(Rcpp)
@@ -242,7 +238,9 @@ names(portfolio_files) <- names(portfolio_files) %>%
 
 #Small function (barely helpful) to save portfolio into csv
 
-port_path <- paste(dirname(getActiveDocumentContext()$path), "/Portfolios", sep = "") 
+
+port_path <- file.path(getwd(), "Portfolios")
+
 
 save_portfolio <- function(name, table){
   

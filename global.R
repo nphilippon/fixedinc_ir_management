@@ -184,14 +184,14 @@ test_cpp_bond_cfs <- get_bond_cfs(start_dates = c("2026-01-01", "2025-06-19", "2
 
 add_row <- function(p_price, start, end, coupon, periodocity, FV, quantity){
   
-  T2M <- round(as.numeric(as_date(end)) - as.numeric(as_date(Sys.Date())),4)
+  T2M <- round(as.numeric(difftime(as.Date(end), Sys.Date(), units = "days"))/365, digits = 4)
   
-  years <- round((as.numeric(as_date(end)) - as.numeric(as_date(start)))/365,4)
+  years <- round(as.numeric(difftime(as.Date(end), as.Date(start), units= "days"))/365, digits = 4)
   
   
   
-  temp_build <- tibble::tibble(start_date = start,
-                               end_date = end,
+  temp_build <- tibble::tibble(start_date = as.Date(start),
+                               end_date = as.Date(end),
                                purchase_price = p_price,
                                length = years,
                                coupon_rate = coupon/100,
@@ -286,20 +286,6 @@ get_portfolio_metrics_table <- function(portfolio_df){
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #--- Cubic Spline interpolation and discount factor calcs below ---#
 #need to know the most recent quotes, since our function can always build the forward curve given the most recent fed quotes
 treasury_yields <- treasury_yields %>% drop_na()
@@ -384,6 +370,7 @@ marking_to_market <- function(target_date, portfolio_table){
 
 today <- Sys.Date()
 
+
 recentday <- max(treasury_yields$date)
 
 quotes <- treasury_yields %>% dplyr::filter(date == recentday) %>%
@@ -412,10 +399,10 @@ discount_factor <- function(data) {
     )
   
   pred <- cbind(new_maturities, predictions) %>% 
-    dplyr::transmute(maturity, rate = fit / 100) 
+    dplyr::transmute(maturity, yield = fit / 100) 
   
   df <- df %>% dplyr::left_join(pred) %>% 
-    dplyr::mutate(df = (1 / (1 + rate)^maturity),
+    dplyr::mutate(df = (1 / (1 + yield)^maturity),
                   pv = cf * df) 
   
   return(df)

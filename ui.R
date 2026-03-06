@@ -8,7 +8,6 @@ dashboardPage(
     sidebarMenu(
       menuItem("US Treasury Yield Data", tabName = "data", icon = icon("table")),
       menuItem("Portfolio Builder", tabName = "builder", icon = icon("wrench")),
-      menuItem("Bond Metrics Calculator", tabName = "metrics", icon = icon("circle-info")),
       menuItem("Risk Manager", tabName = "risk_manager", icon = icon("dollar-sign"))
     )
   ),
@@ -149,8 +148,7 @@ dashboardPage(
                   column(
                     8,
                     valueBoxOutput("pv_rm"),
-                    valueBoxOutput("cashflow_rm"),
-                    valueBoxOutput("dailych_rm")
+                    valueBoxOutput("cashflow_rm")
                   )
                 ),
                 fluidRow(
@@ -211,13 +209,6 @@ dashboardPage(
                                      value = 0,
                                      step = 1)
           
-                       )),
-                       shinyjs::hidden(wellPanel(
-                         id = "rm_text_panel",
-                         h2("TITLE",
-                            style = "font-size: 18px; font-weight: bold;"),
-                         p("Enter information here to inform users about the functions of this page"),
-                         width = NULL
                        ))
                        
                     )

@@ -270,20 +270,23 @@ function(input, output, session) {
   })
   
   
-  
-  
+
   
   observeEvent(input$existing_port_pull, {
     
     exist_port <- isolate(input$portfolio_list)
     
-    temp_table$data <- as.data.frame(updating_list$data[[exist_port]])
+    temp_table$data <- as.data.frame(updating_list$data[[exist_port]]) %>% 
+      dplyr::mutate(start_date = as.Date(start_date),
+                    end_date = as.Date(start_date))
     
   })
   
   
   output$temp_table <- renderDT({
-    temp_table$data
+    temp_table$data %>% 
+      dplyr::mutate(start_date = as.Date(start_date),
+                    end_date = as.Date(end_date))
   })
   
 
@@ -408,7 +411,7 @@ function(input, output, session) {
   
   output$pv_rm <- renderValueBox({
     valueBox(
-      value = 120, #switch with reactive portfolio value here
+      value = pf_value$data, #switch with reactive portfolio value here
       subtitle = "Portfolio Value",
       icon = icon("chart-line"),
       color = "navy"
@@ -417,9 +420,12 @@ function(input, output, session) {
   })
   
   
+  
+  
+  
   output$cashflow_rm <- renderValueBox({
     valueBox(
-      value = 200, #switch with reactive portfolio value here
+      value = port_cashflow$data, 
       subtitle = "Next Cashflow",
       icon = icon("dollar-sign"),
       color = "maroon"
@@ -441,15 +447,14 @@ function(input, output, session) {
   
   #Risk manager inputs well panels:
   
-  shinyjs::showElement(id = "rm_text_panel")
+  #shinyjs::showElement(id = "rm_text_panel")
   
   
   observeEvent(input$cashflow_button, {
     
     shinyjs::hideElement(id = "metric_panel_rm")
     shinyjs::showElement(id = "rm_cashflow_panel")
-    shinyjs::showElement(id = "rm_text_panel")
-    shinyjs::hideElement(id = "scenario_panel")
+   # shinyjs::showElement(id = "rm_text_panel")
     shinyjs::hideElement(id = "mtm_plot_panel")
   })
   
@@ -458,17 +463,15 @@ function(input, output, session) {
     
     shinyjs::hideElement(id = "metric_panel_rm")
     shinyjs::hideElement(id = "rm_cashflow_panel")
-    shinyjs::showElement(id = "rm_text_panel")
-    shinyjs::hideElement(id = "scenario_panel")
+    #shinyjs::showElement(id = "rm_text_panel")
+
     shinyjs::showElement(id = "mtm_plot_panel")
   })
   
   observeEvent(input$scenario_button, {
     
     shinyjs::hideElement(id = "rm_cashflow_panel")
-    shinyjs::showElement(id = "scenario_panel")
     shinyjs::hideElement(id = "metric_panel_rm")
-    shinyjs::hideElement(id = "rm_text_panel")
     shinyjs::showElement(id = "mtm_plot_panel")
     
   })
@@ -477,12 +480,25 @@ function(input, output, session) {
   observeEvent(input$set_rm_port, {
     
     rm_port <- isolate(input$portfolio_list_rm)
-    
+    portfolio_table <- temp_table_rm$data
     temp_table_rm$data <- as.data.frame(updating_list$data[[rm_port]])
+    
+    
+    port_cashflow$data <- cpp_get_portfolio_cfs(start_date = as.Date(portfolio_table$start_date),
+                                                end_date = as.Date(portfolio_table$end_date),
+                                                coupons = as.numeric(portfolio_table$coupon_rate),
+                                                periodicities = as.integer(portfolio_table$N),
+                                                face_values = as.numeric(portfolio_table$Face_Value),
+                                                quantities = as.numeric(portfolio_table$Quantity)) %>% 
+      dplyr::arrange(date) %>% 
+      dplyr::slice(1) %>% 
+      dplyr::pull(date)
+    
     
   })
   
- 
+  
+  
   output$rm_temp_table <- renderDataTable(
     
     temp_table_rm$data,
@@ -490,6 +506,7 @@ function(input, output, session) {
     
   )
   
+  port_cashflow <- reactiveValues(data = NULL)
   
   output$portfolio_cashflows <- renderDataTable({
     
@@ -501,6 +518,8 @@ function(input, output, session) {
                          periodicities = as.integer(portfolio_table$N),
                          face_values = as.numeric(portfolio_table$Face_Value),
                          quantities = as.numeric(portfolio_table$Quantity))
+    
+
 
   })
 
@@ -650,6 +669,9 @@ function(input, output, session) {
       
   })
     
+  
+  pf_value <- reactiveValues(data = NULL)
+  
   output$mtm_plot <- renderPlotly({
     
     portfolio_table <- temp_table_rm$data
@@ -669,6 +691,11 @@ function(input, output, session) {
     mtm_data <- datedf %>% 
       dplyr::mutate(mtm = purrr::map_dbl(date, ~marking_to_market(.x, portfolio_table)
       ))
+    
+    pf_value$data <- mtm_data %>% 
+      dplyr::slice(nrow(.)) %>% 
+      pull(mtm)
+    
     
     mtm_plot <- mtm_data %>% plotly::plot_ly(
       y = ~mtm,

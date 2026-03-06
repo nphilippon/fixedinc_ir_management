@@ -20,8 +20,6 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/build-push-action@v3
-      with:
-        driver: docker-container # Bruh, this shit legit took me almost an hour to find ....... docker needs better documentation....
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5

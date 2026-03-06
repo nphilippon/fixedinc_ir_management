@@ -495,8 +495,8 @@ function(input, output, session) {
     
     portfolio_table <- temp_table_rm$data
     
-    cpp_get_portfolio_cfs(start_dates = as.Date(portfolio_table$start_date),
-                         end_dates = as.Date(portfolio_table$end_date),
+    cpp_get_portfolio_cfs(start_date = as.Date(portfolio_table$start_date),
+                         end_date = as.Date(portfolio_table$end_date),
                          coupons = as.numeric(portfolio_table$coupon_rate),
                          periodicities = as.integer(portfolio_table$N),
                          face_values = as.numeric(portfolio_table$Face_Value),
@@ -504,8 +504,84 @@ function(input, output, session) {
 
   })
 
+  output$portfolio_duration_chart <- renderPlotly({
+    
+    portfolio_table <- temp_table_rm$data %>% 
+      dplyr::mutate(
+        start_dates = as.Date(start_dates),
+        end_dates = as.Date(end_dates),
+        c = as.numeric(coupon_rate),
+        FV = as.numeric(Face_Value),
+        quantity = as.numeric(Quantity),
+        yield = 0
+      )
+      
+    
+    portfolio_metrics <- get_portfolio_metrics_table(portfolio_table)
+    
+    duration_output <- portfolio_metrics %>% 
+      dplyr::mutate(
+        value = bond_price * quantity) %>% 
+      group_by(date) %>% 
+      dplyr::mutate(
+        port_value = sum(FV*quantity)
+      ) %>% 
+      ungroup() %>% 
+      dplyr::mutate(
+        weight = value / port_value,
+        weighted_duration = macaulay_duration * weight
+      ) %>% 
+      dplyr::select(date, bond_id, weighted_duration) %>% 
+      group_by(date) %>% 
+      dplyr::mutate(
+        portfolio_duration = sum(weighted_duration, na.rm = TRUE)
+      ) %>% 
+      ungroup %>% 
+      tidyr::pivot_wider(., names_from = bond_id, values_from = weighted_duration) 
+    
+    
+    plot_ly(duration_output, x = ~date, y = ~portfolio_duration, color = "black",
+            type = 'scatter', mode = 'lines')
+    
+  })
   
-  
+  output$portfolio_convexity_chart <- renderPlotly({
+    
+    portfolio_table <- temp_table_rm$data %>% 
+      dplyr::mutate(
+        start_dates = as.Date(start_dates),
+        end_dates = as.Date(end_dates),
+        c = as.numeric(coupon_rate),
+        FV = as.numeric(Face_Value),
+        quantity = as.numeric(Quantity),
+        yield = 0
+      )
+    
+    portfolio_metrics <- get_portfolio_metrics_table(portfolio_table)
+    
+    convexity_output <- portfolio_metrics %>% 
+      dplyr::mutate(
+        value = bond_price * quantity) %>% 
+      group_by(date) %>% 
+      dplyr::mutate(
+        port_value = sum(FV*quantity)
+      ) %>% 
+      ungroup() %>% 
+      dplyr::mutate(
+        weight = value / port_value,
+        weighted_convexity = convexity * weight
+      ) %>% 
+      dplyr::select(date, bond_id, weighted_convexity) %>% 
+      group_by(date) %>% 
+      dplyr::mutate(
+        portfolio_convexity = sum(weighted_convexity, na.rm = TRUE)
+      ) %>% 
+      ungroup %>% 
+      tidyr::pivot_wider(., names_from = bond_id, values_from = weighted_convexity) 
+    
+    plot_ly(convexity_output, x = ~date, y = ~portfolio_convexity, color = "black",
+            type = 'scatter', mode = 'lines')
+  })
   
   shinyjs::hide(id = "rm_cashflow_panel")
   

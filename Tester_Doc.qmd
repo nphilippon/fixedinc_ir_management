@@ -58,7 +58,7 @@ init_new <- function(start, end, coupon, periodocity, FV, quantity){
   
 }
 
-init_new(0,0,0,0,0,0)
+test_table <- init_new(0,0,0,0,0,0)
 
 
 ```
@@ -110,4 +110,13 @@ portfolio_files <- update_portfolios()
 portfolio_list <- names(portfolio_files)
 
 lapply(portfolio_list, function(x){gsub(".csv", "", x)})
+```
+
+```{r}
+
+
+names(test_table)
+
+
+
 ```

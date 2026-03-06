@@ -314,10 +314,10 @@ spline <- stats::lm(
 #tested with fake data frame
 fakedf <- data.frame(date = as.Date(c("2026-06-01", "2028-01-01", "2032-01-01", "2040-08-01")), cf = c(1200, 100, 10000, 10000))
 
-discount_factor <- function(data) {
-  #must input the bond cash flows in a data frame containing dates and cash flows ie) data
+discount_factor <- function(data, cf = FALSE) {
+  #use cf = TRUE if your df has a cf column, otherwise you just need a date column
   df <- data %>% 
-    dplyr::mutate(maturity = as.numeric(date - recentday) / 365.25)
+    dplyr::mutate(maturity = as.numeric(date - currentday) / 365.25)
   
   new_maturities <- df %>% dplyr::select(maturity)
   
@@ -331,14 +331,21 @@ discount_factor <- function(data) {
   pred <- cbind(new_maturities, predictions) %>% 
     dplyr::transmute(maturity, rate = fit / 100) 
   
-  df <- df %>% dplyr::left_join(pred) %>% 
-    dplyr::mutate(df = (1 / (1 + rate)^maturity),
-                  yield = rate * 100)#,
-                  # pv = cf * df) 
+  if(cf == FALSE) {
+    
+    df <- df %>% dplyr::left_join(pred) %>% 
+      dplyr::mutate(df = (1 / (1 + rate)^maturity))
+    
+  } else {
+    
+    df <- df %>% dplyr::left_join(pred) %>% 
+      dplyr::mutate(df = (1 / (1 + rate)^maturity),
+                    pv = cf * df)  
+  }
   
   df
 }
 #here is the output from the test
-test_discount_factor <- discount_factor(exp_output)
+#test_discount_factor <- discount_factor(fakedf)
 
 #--- end of rate interpolation via cubic spline and discount factor formula/calculator function work ---#

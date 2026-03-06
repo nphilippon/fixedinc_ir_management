@@ -120,3 +120,65 @@ names(test_table)
 
 
 ```
+
+```{r}
+
+
+test_tibble <- tibble::tibble(start = c("2026-01-01", "2026-02-01"),
+                              end = c("2026-02-01", "2026-03-01"),
+                              purchase_price = c(100,200),
+                               length = c(0.25,0.5),
+                               coupon_rate = c(0.5, 0.01),
+                               N = 2,
+                               Face_Value = 100,
+                               Quantity = c(5,50)
+                              )
+
+
+
+
+
+
+```
+
+```{r}
+
+setup_yield_table <- function(df){
+  
+  df %>% 
+    rowwise() %>% 
+    dplyr::mutate(bond_id = row_number()) %>%
+    dplyr::group_by(bond_id) %>% 
+    tidyr::expand(bond_id, seq.Date(from = start, to = end, by = "day"))
+    
+
+}
+
+get_bond_ttm <- function(settlement_date, maturity_date) {
+  # settlement_date: date of bond ownership transfer
+  # maturity_date: maturity date of bond
+  ttm <- as.numeric(difftime(maturity_date, settlement_date, units = "days")) / 365
+  
+  return(ttm)
+}
+
+setup_yield_table <- function(df){
+
+df <- df %>% 
+  dplyr::mutate(bond_id = row_number())
+
+df %>%
+  dplyr::group_by(bond_id) %>% 
+  tidyr::expand(Date = seq.Date(from = as.Date(start), to = as.Date(end), by = "day")) %>% 
+  dplyr::left_join(test_tibble, by = join_by(bond_id)) %>% 
+  dplyr::mutate(TTM = get_bond_ttm(Date, as.Date(end)))
+  
+}
+
+
+setup_yield_table(test_tibble)
+
+
+
+
+```

@@ -250,6 +250,33 @@ save_portfolio <- function(name, table){
 }
 
 
+setup_yield_table <- function(df){
+  
+  df %>% 
+    dplyr::mutate(bond_id = row_number()) %>% 
+    dplyr::group_by(bond_id) %>% 
+    tidyr::expand(Date = seq.Date(from = as.Date(start_date), to = as.Date(end_date), by = "day")) %>% 
+    dplyr::left_join(df, by = join_by(bond_id)) %>% 
+    dplyr::mutate(TTM = get_bond_ttm(Date, as.Date(end_date)))
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #--- Cubic Spline interpolation and discount factor calcs below ---#
 #need to know the most recent quotes, since our function can always build the forward curve given the most recent fed quotes

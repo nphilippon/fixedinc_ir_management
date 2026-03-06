@@ -268,7 +268,11 @@ dashboardPage(
                       DTOutput("portfolio_cashflows",
                                height = NULL,
                                width = NULL)
-                    ))
+                    )),
+                 wellPanel(
+                   h2("Portfolio Metrics"),
+                   DTOutput("portfolio_metrics")
+                 )
                     
                   )
                 )

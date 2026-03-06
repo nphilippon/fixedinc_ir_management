@@ -511,17 +511,20 @@ function(input, output, session) {
   
   shinyjs::hide(id = "rm_cashflow_panel")
   
-  observeEvent(input$set_rm_port, {
+  observeEvent(input$set_rm_port, {shinyjs::showElement(id = "rm_cashflow_panel")})
+  
+  
+  output$portfolio_metrics <- renderDataTable({
     
-
-      
-      shinyjs::showElement(id = "rm_cashflow_panel")
+    port_table <- as.data.frame(temp_table_rm$data)
+    
+    prep_table <- setup_yield_table(port_table)
+    
+    
+    prep_table
     
     
   })
-  
-  
-  
   
   
   

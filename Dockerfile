@@ -1,5 +1,5 @@
 # Pulls base image 
-FROM --platform=linux/amd64 rocker/shiny-verse:latest
+FROM rocker/shiny-verse:latest
 # ----------------
 
 # (Thanks Phil for this one, saves some headaches)
@@ -24,7 +24,7 @@ COPY . /srv/shiny-server/shiny-IR
 
 RUN R -q -e 'if (!requireNamespace("devtools", quietly=TRUE)) install.packages("devtools", repos="https://cloud.r-project.org")' && \
     R -q -e 'devtools::install_github("risktoollib/RTL", upgrade="never")' && \
-    R -q -e "install.packages(c('shiny', 'shinydashboard', 'quantmod', 'tidyquant', 'mgttr', 'DT', 'plotly', 'shinyjs', 'bslib', 'rstudioapi', 'splines', 'RcppRoll', 'Rcpp'), dependencies = TRUE, repos = 'https://packagemanager.rstudio.com/cran/latest')"
+    R -q -e "install.packages(c('shiny', 'shinydashboard', 'quantmod', 'tidyquant', 'mgttr', 'DT', 'plotly', 'shinyjs', 'bslib', 'splines', 'RcppRoll', 'Rcpp'), dependencies = TRUE, repos = 'https://packagemanager.rstudio.com/cran/latest')"
 
 EXPOSE 3838
 

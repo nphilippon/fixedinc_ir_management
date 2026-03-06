@@ -265,7 +265,8 @@ function(input, output, session) {
   output$portfolio_list_rm <- renderUI({ #For Risk Manager
     selectInput("portfolio_list",
                 "Choose Portfolio",
-                choices = names(updating_list$data))
+                choices = names(updating_list$data),
+                selected = names(updating_list$data)[1])
     
   })
   
@@ -480,6 +481,7 @@ function(input, output, session) {
     
     temp_table_rm$data <- as.data.frame(updating_list$data[[rm_port]])
     
+    
   })
   
  
@@ -491,20 +493,32 @@ function(input, output, session) {
   )
   
   
+  output$portfolio_cashflows <- renderDataTable({
+    
+    portfolio_table <- temp_table_rm$data
+    
+    cpp_get_portfolio_cfs(start_dates = as.Date(portfolio_table$start_date),
+                         end_dates = as.Date(portfolio_table$end_date),
+                         coupons = as.numeric(portfolio_table$coupon_rate),
+                         periodicities = as.integer(portfolio_table$N),
+                         face_values = as.numeric(portfolio_table$Face_Value),
+                         quantities = as.numeric(portfolio_table$Quantity))
+
+  })
+
   
-  #position_bar_chart <- reactive({
-  #  
-  # positions <- as.data.frame(temp_table_rm$data)
-  # 
-  # arrange_choice <- isolate() 
-  # 
-  # positions %>% 
-  #   dplyr::arrange()
-  #  
-  #})
   
   
+  shinyjs::hide(id = "rm_cashflow_panel")
   
+  observeEvent(input$set_rm_port, {
+    
+
+      
+      shinyjs::showElement(id = "rm_cashflow_panel")
+    
+    
+  })
   
   
   

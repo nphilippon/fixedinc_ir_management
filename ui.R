@@ -1,6 +1,7 @@
 
 
 dashboardPage(
+  skin = "black",
   dashboardHeader(title = "IR App"),
   # Icon Options Here: https://fontawesome.com/  
   dashboardSidebar(
@@ -161,7 +162,6 @@ dashboardPage(
                     4,
                     box(
                       title = "Risk Manager",
-                      status = "primary",
                       id = "top_box_rm",
                       collapsible = TRUE,
                       solidHeader = T,
@@ -169,7 +169,7 @@ dashboardPage(
                       uiOutput("portfolio_list_rm"), #will try to use same logic as port builder,
                       actionButton("set_rm_port",
                                    "Set Portfolio"),
-                      style = "background: rgb(224,224,224)"
+                      style = "background: rgb(255,255,255)"
                     )
                   ),
                   column(
@@ -182,31 +182,31 @@ dashboardPage(
                 fluidRow(
                   column(
                     4,
+                    align = "center",
                     fluidRow(
                         actionButton("VaR_button",
                                      "VaR",
-                                     style = "color: #FFFFFF; background-color: #08415C; border-color: #000000; display: inline-block;",
-                                     width = "100%"),
+                                     style = "color: #FFFFFF; background-color: #08415C;",
+                                     width = "90%"),
                       
                         actionButton("stress_rm_button",
                                      "Stress Testing",
-                                     style = "color: #FFFFFF;background-color: #CC2936; border-color: #000000; display: inline-block;",
-                                     width = "100%"),
+                                     style = "color: #FFFFFF;background-color: #CC2936;",
+                                     width = "90%"),
                     
                         actionButton("button_3",
                                      "Something Else",
-                                      style = "color: #FFFFFF;background-color: #6B818C; border-color: #000000; display: inline-block;",
-                                      width = "100%")
+                                      style = "color: #FFFFFF;background-color: #6B818C;",
+                                      width = "90%")
                     ),
                     fluidRow(
                        shinyjs::hidden(wellPanel(
                            id = "var_inputs",
                            h2("Value At Risk",
                               style =  "font-size: 18px; font-weight: bold;"),
-                           style = "background: rgb(224,224,225)", #Can make colors nicer
                            width = 12,
                            numericInput("confidence_rm",
-                                        "Confidence ($)",
+                                        "Confidence (%)",
                                         value = 5,
                                         min = 0,
                                         max = 100,
@@ -216,18 +216,19 @@ dashboardPage(
                          id = "stress_inputs",
                          h2("Stress Test",
                             style = "font-size: 18px; font-weight: bold;"),
-                         style = "background: rgb(224,224,224);",
                          width = 12,
-                         numericInput("basis_ch_rm",
+                         sliderInput("basis_ch_rm",
                                       "Basis Point Change",
+                                      min = -1000,
+                                      max = +1000,
                                       value = 0,
                                       step = 1)
+                        
                        )),
                        shinyjs::hidden(wellPanel(
                          id = "other_panel",
                          h2("TITLE",
                             style = "font-size: 18px; font-weight: bold;"),
-                         style = "background: rgb(224,224,224);",
                          width = 12,
                          numericInput("input_3",
                                       "TITLE",
@@ -240,8 +241,7 @@ dashboardPage(
                          h2("TITLE",
                             style = "font-size: 18px; font-weight: bold;"),
                          p("Enter information here to inform users about the functions of this page"),
-                         width = 12,
-                         style = "background: rgb(224,224,224);"
+                         width = NULL
                         
                        ))
                     )
@@ -252,7 +252,6 @@ dashboardPage(
                     align = "center",
                     box(
                       title = "Portfolio Table",
-                      status = "primary",
                       width = NULL,
                       DTOutput("rm_temp_table",
                                height = NULL,
@@ -260,7 +259,17 @@ dashboardPage(
                       collapsible = TRUE,
                       solidHeader = TRUE
                       
-                    )
+                    ),
+                 shinyjs::hidden(wellPanel(
+                      id = "rm_cashflow_panel",
+                      h2("Cashflow Calendar",
+                         style = "font-weight = bold"),
+                      width = NULL,
+                      DTOutput("portfolio_cashflows",
+                               height = NULL,
+                               width = NULL)
+                    ))
+                    
                   )
                 )
                   

@@ -191,7 +191,9 @@ add_row <- function(p_price, start, end, coupon, periodocity, FV, quantity){
   
   
   
-  temp_build <- tibble::tibble(purchase_price = p_price,
+  temp_build <- tibble::tibble(start_date = start,
+                               end_date = end,
+                               purchase_price = p_price,
                                length = years,
                                coupon_rate = coupon/100,
                                TTM = T2M,
@@ -246,6 +248,8 @@ save_portfolio <- function(name, table){
   readr::write_csv(table, connection, append = FALSE)
   
 }
+
+
 
 #--- Cubic Spline interpolation and discount factor calcs below ---#
 #need to know the most recent quotes, since our function can always build the forward curve given the most recent fed quotes

@@ -1,4 +1,4 @@
-purchase_price,length,coupon_rate,TTM,N,Face_Value,Quantity,Nominal_Value
-100,0,0,0,1,1000,0,0
-100,0,0,0,1,1000,0,0
-100,0,0,0,1,1000,0,0
+start_dates,end_dates,purchase_price,length,coupon_rate,TTM,N,Face_Value,Quantity,Nominal_Value
+2026-03-05,2028-12-31,100,2.8274,0.03,1032,3,1000,2,2000
+2026-03-05,2031-12-31,93,5.8274,0.06,2127,2,100,5,500
+2026-03-05,2032-06-30,93,6.326,0.04,2309,5,100,3,300

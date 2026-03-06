@@ -263,7 +263,7 @@ function(input, output, session) {
   
 
   output$portfolio_list_rm <- renderUI({ #For Risk Manager
-    selectInput("portfolio_list",
+    selectInput("portfolio_list_rm",
                 "Choose Portfolio",
                 choices = names(updating_list$data),
                 selected = names(updating_list$data)[1])
@@ -475,7 +475,7 @@ function(input, output, session) {
   
   observeEvent(input$set_rm_port, {
     
-    rm_port <- isolate(input$set_rm_port)
+    rm_port <- isolate(input$portfolio_list_rm)
     
     temp_table_rm$data <- as.data.frame(updating_list$data[[rm_port]])
     

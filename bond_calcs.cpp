@@ -8,9 +8,11 @@ using namespace Rcpp;
 //[[Rcpp::export]] 
 List cpp_get_bond_metrics(double ttm, double yield, double c, double FV = 100.0, int periodicity = 2) { 
   
-  int n = std::floor(ttm * periodicity); // Calculate number of payment periods remaining (same as n_pmt_periods)
-  if (n < 1)
-    return List::create(); // Exits early if no coupon payments remaining (ie bond is expired)
+  if (ttm <= 0)
+    return List::create(); // Exits early if bond is expired
+  
+  int n = std::max(1, (int)std::ceil(ttm * periodicity)); // Calculate number of payment periods remaining (including partial periods)
+  
   
   // Set up output vectors of length n (pre-allocates memory)
   NumericVector pmt_times(n);
@@ -29,9 +31,10 @@ List cpp_get_bond_metrics(double ttm, double yield, double c, double FV = 100.0,
   
   // Loop for per cashflow calculations 
   for(int i = 0; i < n; ++i) {
-    pmt_times[i] = (i + 1) * dt; // Add this payment time to vector
-    if (i == n - 1)
+    pmt_times[i] = (i + 1) * (1.0 / periodicity); // Add this payment time to vector
+    if (i == n - 1 || pmt_times[i] > ttm) {
       pmt_times[i] = ttm; // Set last payment time to expiration date
+    }
     
     cashflows[i] = c_pmt; // Add this notional cashflow to vector
     if (i == n - 1)
@@ -61,7 +64,7 @@ List cpp_get_bond_metrics(double ttm, double yield, double c, double FV = 100.0,
   };
   
   // Delta and Gamma
-  double step_size = 0.0001; // 1 bp step size
+  double step_size = 0.01; // 1 bp step size
   
   double price_plus = calc_bond_price(yield + step_size); // Calculates bond price with a 1bp yield increase
   double price_minus = calc_bond_price(yield - step_size); // Calculates bond price with a 1bp yield decrease

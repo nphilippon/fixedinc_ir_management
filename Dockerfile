@@ -15,18 +15,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 # libxml2-dev - GNOME XML Library (https://packages.debian.org/sid/libxml2-dev)
 
 RUN apt-get update && apt install -y -no-install-recommends \
-    git \
     libssl-dev \
     libcurl4-gnutls-dev \
     libxml2-dev \
     && apt-get autoremove -y
 
+COPY . /srv/shiny-server/shiny-IR
+
 RUN R -q -e 'if (!requireNamespace("devtools", quietly=TRUE)) install.packages("devtools", repos="https://cloud.r-project.org")' && \
     R -q -e 'devtools::install_github("risktoollib/RTL", upgrade="never")' && \
     R -q -e "install.packages(c('shiny', 'shinydashboard', 'quantmod', 'tidyquant', 'mgttr', 'DT', 'plotly', 'shinyjs', 'bslib', 'rstudioapi', 'splines', 'RcppRoll', 'Rcpp'), dependencies = TRUE, repos = 'https://packagemanager.rstudio.com/cran/latest')"
-
-# Clones the repo into a new folder, changes owners to non-root. (Shout out the bash manual)
-RUN git clone https://github.com/nphilippon/fixedinc_ir_management.git /srv/shiny-server/shiny-IR
 
 EXPOSE 3838
 

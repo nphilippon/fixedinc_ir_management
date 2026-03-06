@@ -353,13 +353,13 @@ past_discount_factor <- function(data, target_date){
                     pv = cf * df)  
     #}
     
-    df
+    return(df)
   }
-  int_discount_factor(data)
+  return(int_discount_factor(data))
 }
 
 
-marking_to_market <- function(target_date){
+marking_to_market <- function(target_date, portfolio_table){
   
   x <- cpp_get_portfolio_cfs(start_dates = as.Date(portfolio_table$start_date),
                              end_dates = as.Date(portfolio_table$end_date),
@@ -379,18 +379,10 @@ marking_to_market <- function(target_date){
   
   mtm <- sum(x$cash_received) + sum(x$pv_noncash)
   
-  mtm
+  return(mtm)
 }
 
 today <- Sys.Date()
-
-datedf <- tibble(
-  date = seq(as.Date("2026-01-01"), Sys.Date(), by = "day")
-)
-
-mark_to_market <- datedf %>% 
-  dplyr::mutate(mtm = purrr::map_dbl(date, ~marking_to_market(.x)
-  ))
 
 recentday <- max(treasury_yields$date)
 
@@ -426,5 +418,5 @@ discount_factor <- function(data) {
     dplyr::mutate(df = (1 / (1 + rate)^maturity),
                   pv = cf * df) 
   
-  df
+  return(df)
 }

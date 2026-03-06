@@ -667,7 +667,7 @@ function(input, output, session) {
     )
     
     mtm_data <- datedf %>% 
-      dplyr::mutate(mtm = purrr::map_dbl(date, ~marking_to_market(.x)
+      dplyr::mutate(mtm = purrr::map_dbl(date, ~marking_to_market(.x, portfolio_table)
       ))
     
     mtm_plot <- mtm_data %>% plotly::plot_ly(

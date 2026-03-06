@@ -14,7 +14,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # libcurl4-gnutls-dev - Client side URL transfer library (https://packages.debian.org/trixie/libcurl4-gnutls-dev)
 # libxml2-dev - GNOME XML Library (https://packages.debian.org/sid/libxml2-dev)
 
-RUN apt-get update && apt install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     libcurl4-gnutls-dev \
     libxml2-dev \

@@ -383,6 +383,15 @@ marking_to_market <- function(target_date){
 }
 
 today <- Sys.Date()
+
+datedf <- tibble(
+  date = seq(as.Date("2026-01-01"), Sys.Date(), by = "day")
+)
+
+mark_to_market <- datedf %>% 
+  dplyr::mutate(mtm = purrr::map_dbl(date, ~marking_to_market(.x)
+  ))
+
 recentday <- max(treasury_yields$date)
 
 quotes <- treasury_yields %>% dplyr::filter(date == recentday) %>%

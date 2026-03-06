@@ -652,11 +652,8 @@ function(input, output, session) {
     
   output$mtm_plot <- renderPlotly({
     
-    datedf <- tibble(
-      date = seq(as.Date("2026-01-01"), Sys.Date(), by = "day")
-    )
-    
     portfolio_table <- temp_table_rm$data
+    data <- portfolio_table
     
     portfolio_cashflows <- cpp_get_portfolio_cfs(start_date = as.Date(portfolio_table$start_date),
                                                  end_date = as.Date(portfolio_table$end_date),

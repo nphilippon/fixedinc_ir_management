@@ -445,31 +445,29 @@ function(input, output, session) {
   shinyjs::showElement(id = "rm_text_panel")
   
   
-  observeEvent(input$VaR_button, {
+  observeEvent(input$cashflow_button, {
     
-    shinyjs::hideElement(id = "rm_text_panel")
-    shinyjs::hideElement(id = "stress_inputs")
-    shinyjs::hideElement(id = "other_panel")
-    shinyjs::showElement(id = "var_inputs")
-    
+    shinyjs::hideElement(id = "metric_panel_rm")
+    shinyjs::showElement(id = "rm_cashflow_panel")
+    shinyjs::showElement(id = "rm_text_panel")
+    shinyjs::hideElement(id = "scenario_panel")
   })
   
   
-  observeEvent(input$stress_rm_button, {
+  observeEvent(input$port_metrics_button, {
     
-    shinyjs::hideElement(id = "rm_text_panel")
-    shinyjs::showElement(id = "stress_inputs")
-    shinyjs::hideElement(id = "other_panel")
-    shinyjs::hideElement(id = "var_inputs")
-    
+    shinyjs::showElement(id = "metric_panel_rm")
+    shinyjs::hideElement(id = "rm_cashflow_panel")
+    shinyjs::showElement(id = "rm_text_panel")
+    shinyjs::hideElement(id = "scenario_panel")
   })
   
-  observeEvent(input$button_3, {
+  observeEvent(input$scenario_button, {
     
+    shinyjs::hideElement(id = "rm_cashflow_panel")
+    shinyjs::showElement(id = "scenario_panel")
+    shinyjs::hideElement(id = "metric_panel_rm")
     shinyjs::hideElement(id = "rm_text_panel")
-    shinyjs::hideElement(id = "stress_inputs")
-    shinyjs::showElement(id = "other_panel")
-    shinyjs::hideElement(id = "var_inputs")
     
     
   })

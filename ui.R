@@ -184,56 +184,58 @@ dashboardPage(
                     4,
                     align = "center",
                     fluidRow(
-                        actionButton("VaR_button",
-                                     "VaR",
+                        actionButton("port_metrics_button",
+                                     "Metrics",
                                      style = "color: #FFFFFF; background-color: #08415C;",
                                      width = "90%"),
                       
-                        actionButton("stress_rm_button",
-                                     "Stress Testing",
+                        actionButton("cashflow_button",
+                                     "CashFlows",
                                      style = "color: #FFFFFF;background-color: #CC2936;",
                                      width = "90%"),
                     
-                        actionButton("button_3",
-                                     "Something Else",
+                        actionButton("scenario_button",
+                                     "Scenarios",
                                       style = "color: #FFFFFF;background-color: #6B818C;",
                                       width = "90%")
                     ),
                     fluidRow(
+                       #shinyjs::hidden(wellPanel(
+                       #   id = "metric_inputs",
+                       #     h2("Value At Risk",
+                       #        style =  "font-size: 18px; font-weight: bold;"),
+                       #     width = 12,
+                       #     numericInput("confidence_rm",
+                       #                  "Confidence (%)",
+                       #                  value = 5,
+                       #                  min = 0,
+                       #                  max = 100,
+                       #                  step = 2.5)
+                       #)),
+                       #shinyjs::hidden(wellPanel(
+                       #   id = "stress_inputs",
+                       #   h2("Stress Test",
+                       #      style = "font-size: 18px; font-weight: bold;"),
+                       #   width = 12,
+                       #   sliderInput("basis_ch_rm",
+                       #                "Basis Point Change",
+                       #                min = -1000,
+                       #                max = +1000,
+                       #                value = 0,
+                       #                step = 1)
+                        
+                       #)),
                        shinyjs::hidden(wellPanel(
-                           id = "var_inputs",
-                           h2("Value At Risk",
-                              style =  "font-size: 18px; font-weight: bold;"),
-                           width = 12,
-                           numericInput("confidence_rm",
-                                        "Confidence (%)",
-                                        value = 5,
-                                        min = 0,
-                                        max = 100,
-                                        step = 2.5)
-                       )),
-                       shinyjs::hidden(wellPanel(
-                         id = "stress_inputs",
-                         h2("Stress Test",
+                         id = "scenario_panel",
+                         h2("Scenario Manager",
                             style = "font-size: 18px; font-weight: bold;"),
                          width = 12,
                          sliderInput("basis_ch_rm",
-                                      "Basis Point Change",
-                                      min = -1000,
-                                      max = +1000,
-                                      value = 0,
-                                      step = 1)
-                        
-                       )),
-                       shinyjs::hidden(wellPanel(
-                         id = "other_panel",
-                         h2("TITLE",
-                            style = "font-size: 18px; font-weight: bold;"),
-                         width = 12,
-                         numericInput("input_3",
-                                      "TITLE",
-                                      value = 0,
-                                      step = 1)
+                                    "Basis Point Change",
+                                     min = -100,
+                                     max = +100,
+                                     value = 0,
+                                     step = 1)
           
                        )),
                        shinyjs::hidden(wellPanel(
@@ -269,10 +271,12 @@ dashboardPage(
                                height = NULL,
                                width = NULL)
                     )),
-                 wellPanel(
+                 shinyjs::hidden(wellPanel(
+                   id = "metric_panel_rm",
                    h2("Portfolio Metrics"),
                    DTOutput("portfolio_metrics")
-                 )
+                   
+                 ))
                     
                   )
                 )

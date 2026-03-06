@@ -267,6 +267,13 @@ get_bond_cfs <- function(start_dates, end_dates, coupons, periodicities, face_va
                                          as.numeric(coupons), as.integer(periodicities),
                                          as.numeric(face_values), as.numeric(quantities))
   
+  bond_cfs_long <- bond_cfs_long %>% 
+    dplyr::mutate(
+      date = as.Date(date) # Makes sure date is of proper type (although I think the C++ output is already)
+    ) %>% 
+    arrange(date)
+  
+  return(bond_cfs_long)
 }
 
 test_cpp_bond_cfs <- get_bond_cfs(start_dates = c("2026-01-01", "2025-06-19", "2024-12-25", "2023-04-22"), 

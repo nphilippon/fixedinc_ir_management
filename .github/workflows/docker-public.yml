@@ -13,7 +13,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Docker Buildx
-      uses: docker/build-push-action@v3
+      uses: docker/build-buildx-action@v3
       with:
         driver: docker-container # Trying this again, found a reddit thread with the install part so please pray
         install: true

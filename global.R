@@ -128,130 +128,8 @@ get_yield_metrics <- function(yields, m = 2, price = 100) {
   return(yields_metrics)
 }
 
-# OLD BOND_CFS FUNCTION (HAS BEEN MOVED TO C++) - WILL DELETE SOON
-bond_cfs <- function(start_dates, end_dates, coupons, periodicities, face_values, quantities) {
-  # Start_dates: Vector, starting dates (first payments), in date format for all the bonds
-  # End_dates: Vector, ending dates (final payments), in date format for all the bnods
-  # Coupons: Vector, numerical coupon rates for the bonds (MUST BE SAME TIME FRAME COMPOUNDING)
-  # Periodicities: Vector, numerical. Number of payments within a year.
-  # Face_values: Vector, numerical. Face value of each individual bond. 
-  # Quantities: Vector, numerical amount of each bond owned in the portfolio
-  # If you have questions about this function or need it modified, text Alex. 
-  
-  
-  # Makes sure everything is in its proper format and class
-  start_dates <- as.Date(start_dates)
-  end_dates <- as.Date(end_dates)
-  
-  coupons <- as.numeric(coupons)
-  periodicities <- as.numeric(periodicities)
-  face_values <- as.numeric(face_values)
-  quantities <- as.numeric(quantities)
-  # -------------------------------------------------------
-  
-  # Global variables for absolute max and min date for the building of the tibble a bit later
-  min_date <- min(start_dates)
-  max_date <- max(end_dates)
-  num_days <- as.numeric(difftime(max_date, min_date, units = c('days')))
-  first_payments <- as.numeric(day(start_dates))
-  # -----------------------------------------------------------------------------------------
-  
-  
-  # # Initializes and fills out vector of payment amounts in notional terms.
-  # payment_notional <- c()
-  # for (bond in 1:length(quantities)){
-  #   # formula is: (c/m) * FV * Quantity
-  #   payment_notional[bond] <- (coupons[bond]/periodicities[bond]) * face_values[bond] * quantities[bond]
-  # }
-  # # ----------------------------------------------------------------------
-  # 
-  # # Initializes and fills out vector of payment months (this is a critical part, please read carefully beore changing shit)
-  # payment_months <- list()
-  # for (bond in 1:length(quantities)){
-  #   months_between <- 12/periodicities[bond] # How many months between payments
-  #   start_month <- as.numeric(month(start_dates[bond])) %% 12 # Month of the first payment
-  #   
-  #   payment_months[[bond]] <- unique(seq(start_month, start_month + 12, by = months_between) %% 12)
-  # }
-  # -----------------------------------------------------------------------------------------------------------------------
-  
-  # Initalizes date column for the df!!!!
-  date_col <- seq.Date(min_date, max_date, by = "day")
-  # -------------------------------------
-  
-  # Creates the bond cashflow columns, its complicated becuase they all need to be 
-  # O(n^2) is bad i know, im sorry D:
-  
-  # Initializes and fills out vector of payment amounts in notional terms.
-  payment_notional <- c()
-  
-  # Initializes and fills out vector of payment months (this is a critical part, please read carefully beore changing shit)
-  payment_months <- list()
-  
-  bond_columns <- list()
-  for (num in 1:length(quantities)){
-    
-    payment_notional[num] <- (coupons[num]/periodicities[num]) * face_values[num] * quantities[num]
-    
-    months_between <- 12/periodicities[num] # How many months between payments
-    start_month <- as.numeric(month(start_dates[num])) %% 12 # Month of the first payment
-    
-    payment_months[[num]] <- unique(seq(start_month, start_month + 12, by = months_between) %% 12)
-    
-    bond <- c() # Empty vector that gets updated then added to the whole list of other bonds, it gets reset every time
-    
-    # Sets all the bond-dependant variables for ease of reading and debugging. 
-    pmt <- payment_notional[num] # Payment amount of the bond we're currently working on
-    fv <- face_values[num] # Face value of the urrent bond
-    pmt_months <- payment_months[[num]] # Vector of the payment months
-    
-    p1 <- start_dates[num] # Date of the first payment for the bond
-    pn <- end_dates[num] # Date the bond is done.
-    
-    for (date in 1:length(date_col)){
-      
-      # Sets the date-dependant variables for ease of reading and debugging
-      curr_date <- date_col[date]
-      curr_month <- month(curr_date)
-      
-      
-      bond[date] = case_when(
-        (curr_date < p1 | curr_date > pn) ~ 0, # Before the bond begins or after it ends
-        curr_date == pn ~ (pmt + fv), # If its the last payment date
-        ((month(curr_date) %% 12) %in% pmt_months) & (day(curr_date) == day(p1)) ~ pmt, # Its the correct payment month, on the payment date. 
-        TRUE ~ 0 # All other cases
-      )
-    }
-    bond_columns[[paste0("B", num)]] <- bond # Adds the current bond we just made to the big list of bonds we already have :-)
-  }
-  # ------------------------------------------------------------------------------
-  
-  # Final output loop, this was written at 11:30pm so please be forgiving
-  output_df <- data.frame(date = date_col)
-  
-  for (bond in 1:length(bond_columns)){
-    # Finds the name of the bond, should be like "B1", "B2", "B3" and so on....
-    col_name <- names(bond_columns)[bond]
-    
-    output_df <- output_df %>%
-      dplyr::mutate(!!col_name := bond_columns[[bond]]) # God bless the whalrus, it doesnt work if you just use a normal = sign
-    
-  }
-  output_df <- output_df %>%
-    dplyr::mutate(cf = rowSums(across(starts_with("B"))))
-  
-  # Hello Mathew Frame if you're reading this
-  return(output_df)
-}
-
-#system.time(
-#TEST_BOND_CFS <- #bond_cfs(start_dates = c("2026-01-01", "2025-06-19", "2024-12-25", "2023-04-22"), 
-                          #end_dates = c("2032-12-31", "2028-02-14", "2029-12-24", "2031-01-01"), 
-                          #coupons = c(0.05, 0.09, 0.04, 0.12), 
-                          #periodicities = c(2, 2, 2, 2), 
-                         # face_values = c(100000, 200000, 300000, 400000), 
-                         # quantities = c(1, 2, 3, 4))
-#)
+# Get treasury yield metrics for all dates and tenors
+treasury_yields_metrics <- get_yield_metrics(treasury_yields)
 
 # Function for getting bond cashflows with C++ function
 get_bond_cfs <- function(start_dates, end_dates, coupons, periodicities, face_values, quantities) {
@@ -276,12 +154,7 @@ get_bond_cfs <- function(start_dates, end_dates, coupons, periodicities, face_va
   return(bond_cfs_long)
 }
 
-test_cpp_bond_cfs <- get_bond_cfs(start_dates = c("2026-01-01", "2025-06-19", "2024-12-25", "2023-04-22"), 
-                              end_dates = c("2032-12-31", "2028-02-14", "2029-12-24", "2031-01-01"), 
-                              coupons = c(0.05, 0.09, 0.04, 0.12), 
-                              periodicities = c(2, 2, 2, 2), 
-                              face_values = c(100000, 200000, 300000, 400000), 
-                              quantities = c(1, 2, 3, 4))
+
 
 # Function for calculating TTM (moved to its own so we can use either dates or ttm input)
 get_bond_ttm <- function(settlement_date, maturity_date) {
@@ -296,11 +169,15 @@ get_bond_ttm <- function(settlement_date, maturity_date) {
 # Testing functions
 test_bond_ttm <- get_bond_ttm(settlement_date = "2016-01-01", maturity_date = "2026-01-01")
 test_bond_metrics <- cpp_get_bond_metrics(ttm = 10, yield = 0.05, c = 0.05)
+test_cpp_bond_cfs <- get_bond_cfs(start_dates = c("2026-01-01", "2025-06-19", "2024-12-25", "2023-04-22"), 
+                                  end_dates = c("2032-12-31", "2028-02-14", "2029-12-24", "2031-01-01"), 
+                                  coupons = c(0.05, 0.09, 0.04, 0.12), 
+                                  periodicities = c(2, 2, 2, 2), 
+                                  face_values = c(100000, 200000, 300000, 400000), 
+                                  quantities = c(1, 2, 3, 4))
 
-# test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", ytm = 0.04, c = 0.05, FV = 100)
 
-treasury_yields_metrics <- get_yield_metrics(treasury_yields)   # <----  THIS TAKES FOREVER, until we implement it as a .cpp
-                                                                # function I would only run it if you have to
+                                                                
 
 
 #Portfolio Builder Functions

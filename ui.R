@@ -244,16 +244,12 @@ dashboardPage(
                             style = "font-size: 18px; font-weight: bold;"),
                          p("Enter information here to inform users about the functions of this page"),
                          width = NULL
-                        
                        ))
+                       
                     )
                 ),
                 column(
                   8,
-                  fluidRow(
-                    plotlyOutput("portfolio_duration_chart", height = "300px"),
-                    plotlyOutput("portfolio_convexity_chart", height = "300px")# just here for now
-                  ),
                   fluidRow(
                     align = "center",
                     box(
@@ -278,7 +274,8 @@ dashboardPage(
                  shinyjs::hidden(wellPanel(
                    id = "metric_panel_rm",
                    h2("Portfolio Metrics"),
-                   DTOutput("portfolio_metrics")
+                   plotlyOutput("portfolio_duration_chart", height = "300px"),
+                   plotlyOutput("portfolio_convexity_chart", height = "300px")
                    
                  ))
                     

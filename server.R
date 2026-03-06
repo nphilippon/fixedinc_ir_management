@@ -265,8 +265,7 @@ function(input, output, session) {
   output$portfolio_list_rm <- renderUI({ #For Risk Manager
     selectInput("portfolio_list_rm",
                 "Choose Portfolio",
-                choices = names(updating_list$data),
-                selected = names(updating_list$data)[1])
+                choices = names(updating_list$data))
     
   })
   
@@ -504,18 +503,20 @@ function(input, output, session) {
 
   })
 
+  
+  
+  
   output$portfolio_duration_chart <- renderPlotly({
     
-    portfolio_table <- temp_table_rm$data %>% 
+    p_table <- temp_table_rm$data
+    
+    portfolio_table <- p_table %>% 
       dplyr::mutate(
         start_dates = as.Date(start_dates),
         end_dates = as.Date(end_dates),
-        c = as.numeric(coupon_rate),
-        FV = as.numeric(Face_Value),
-        quantity = as.numeric(Quantity),
         yield = 0
       )
-      
+
     
     portfolio_metrics <- get_portfolio_metrics_table(portfolio_table)
     
@@ -547,13 +548,12 @@ function(input, output, session) {
   
   output$portfolio_convexity_chart <- renderPlotly({
     
-    portfolio_table <- temp_table_rm$data %>% 
+    p_table <- temp_table_rm$data 
+    
+    portfolio_table <- p_table%>% 
       dplyr::mutate(
         start_dates = as.Date(start_dates),
         end_dates = as.Date(end_dates),
-        c = as.numeric(coupon_rate),
-        FV = as.numeric(Face_Value),
-        quantity = as.numeric(Quantity),
         yield = 0
       )
     

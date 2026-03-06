@@ -134,7 +134,14 @@ test_tibble <- tibble::tibble(start = c("2026-01-01", "2026-02-01"),
                                Quantity = c(5,50)
                               )
 
+test_tibble <- test_tibble %>% 
+  dplyr::mutate(bond_id = row_number())
 
+test_tibble %>%
+  dplyr::group_by(bond_id) %>% 
+  dplyr::reframe(Date = seq.Date(from = as.Date(start), to = as.Date(end), by = "day")) %>% 
+  dplyr::left_join(test_tibble, by = join_by(bond_id)) %>% 
+  dplyr::mutate(TTM = get_bond_ttm(Date, as.Date(end)))
 
 
 
@@ -169,7 +176,7 @@ df <- df %>%
 
 df %>%
   dplyr::group_by(bond_id) %>% 
-  tidyr::expand(Date = seq.Date(from = as.Date(start), to = as.Date(end), by = "day")) %>% 
+  dplyr::reframe(Date = seq.Date(from = as.Date(start), to = as.Date(end), by = "day")) %>% 
   dplyr::left_join(test_tibble, by = join_by(bond_id)) %>% 
   dplyr::mutate(TTM = get_bond_ttm(Date, as.Date(end)))
   

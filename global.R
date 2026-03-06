@@ -8,6 +8,10 @@ library(RTL)
 library(plotly)
 library(shinyjs)
 library(bslib)
+<<<<<<< Updated upstream
+=======
+#library(rstudioapi) #using this to set working directory to wherever this file is located (I think there may be something better)
+>>>>>>> Stashed changes
 library(splines)
 library(RcppRoll)
 library(Rcpp)
@@ -210,9 +214,9 @@ add_row <- function(p_price, start, end, coupon, periodocity, FV, quantity){
 
 update_portfolios <- function(){
 
-port_path <- paste(dirname(getActiveDocumentContext()$path), "/Portfolios", sep = "") 
+#port_path <- paste(dirname(getActiveDocumentContext()$path), "/Portfolios", sep = "") 
 #This means the 'Portfolios' folder must live BESIDE the global file
-
+port_path <- file.path(getwd(), "Portfolios")
 
 portfolio_list <- list.files(path = port_path, pattern = "\\.csv$")
 
@@ -251,16 +255,16 @@ save_portfolio <- function(name, table){
 
 get_portfolio_metrics_table <- function(portfolio_df){
   
+  df <- portfolio_df %>% 
+    dplyr::mutate(bond_id = row_number())
   
-  portfolio_df <- portfolio_df %>% 
-    dplyr::mutate(
-      bond_id = row_number(),
-      date = map2(start_dates, end_dates, ~seq.Date(.x, .y, by = "day"))) %>% 
-    unnest(date) %>% 
-    dplyr::mutate(
-      ttm = as.numeric(get_bond_ttm(date, end_dates))
-    ) %>% 
-    select(bond_id, date, ttm, c, FV, quantity)
+  portfolio_df <- df %>% 
+    dplyr::group_by(bond_id) %>% 
+    dplyr::reframe(date = seq.Date(from = as.Date(start_dates), to = as.Date(end_dates), by = "day")) %>% 
+    dplyr::left_join(df, by = join_by(bond_id)) %>% 
+    dplyr::mutate(ttm = get_bond_ttm(date, as.Date(end_dates))) %>% 
+    ungroup() %>% 
+    select(bond_id, date, ttm, c = coupon_rate, FV = Face_Value, quantity = Quantity)
   
   portfolio_dates <- portfolio_df %>% 
     distinct(date)
@@ -316,7 +320,7 @@ fakedf <- data.frame(date = as.Date(c("2026-06-01", "2028-01-01", "2032-01-01", 
 discount_factor <- function(data, cf = FALSE) {
   #use cf = TRUE if your df has a cf column, otherwise you just need a date column
   df <- data %>% 
-    dplyr::mutate(maturity = as.numeric(date - currentday) / 365.25)
+    dplyr::mutate(maturity = as.numeric(date - recentday) / 365.25)
   
   new_maturities <- df %>% dplyr::select(maturity)
   
@@ -328,17 +332,17 @@ discount_factor <- function(data, cf = FALSE) {
     )
   
   pred <- cbind(new_maturities, predictions) %>% 
-    dplyr::transmute(maturity, rate = fit / 100) 
+    dplyr::transmute(maturity, yield = fit / 100) 
   
   if(cf == FALSE) {
     
     df <- df %>% dplyr::left_join(pred) %>% 
-      dplyr::mutate(df = (1 / (1 + rate)^maturity))
+      dplyr::mutate(df = (1 / (1 + yield)^maturity))
     
   } else {
     
     df <- df %>% dplyr::left_join(pred) %>% 
-      dplyr::mutate(df = (1 / (1 + rate)^maturity),
+      dplyr::mutate(df = (1 / (1 + yield)^maturity),
                     pv = cf * df)  
   }
   

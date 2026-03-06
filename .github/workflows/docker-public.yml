@@ -27,5 +27,5 @@ jobs:
         context: .
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/fixedinc_ir_management:latest
-        cache-from: type=gha, scope = fin451-risk
-        cache-to: type=gha, mode=max, scope = fixedinc_ir_management
+        cache-from: type=gha
+        cache-to: type=gha, mode=max

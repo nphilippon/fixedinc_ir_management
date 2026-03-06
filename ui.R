@@ -127,32 +127,6 @@ dashboardPage(
               )
               
       ),
-      tabItem(tabName = "metrics",
-              fluidRow(
-                box(width = 3, title = "Input Bond Details", status = "warning",
-                    numericInput("calc_fv", "Face/Par Value:", value = 100, min = 0),
-                    numericInput("calc_c", "Annual Coupon Rate (%):", value = 5.0, step = 0.1),
-                    selectInput("calc_periodicity", "Coupon Payment Frequency:",
-                                choices = c("Annual" = 1, "Semi-Annual" = 2, "Quarterly" = 4, "Monthly" = 12),
-                                selected = 2),
-                    numericInput("calc_yield", "Current Yield (%):", value = 6.0, step = 0.1),
-                    numericInput("calc_ttm", "Time to Maturity (Yrs):", value = 5.0),
-                    hr(),
-                    actionButton("run_metrics_calc", "Calculate Metrics")
-                ),
-                box(width = 9, title = "Bond Metrics", status = "primary",
-                    fluidRow(
-                      valueBoxOutput("bond_price_box", width = 3),
-                      valueBoxOutput("modified_duration_box", width = 3),
-                      valueBoxOutput("convexity_box", width = 3)
-                    ),
-                    fluidRow(
-                      valueBoxOutput("central_delta_approx_box", width = 4),
-                      valueBoxOutput("gamma_approx_box", width = 4)
-                    )
-                )
-              )
-      ),
       tabItem(tabName = "risk_manager",
               theme = bs_theme(),
               
@@ -277,24 +251,16 @@ dashboardPage(
                    plotlyOutput("portfolio_duration_chart", height = "300px"),
                    plotlyOutput("portfolio_convexity_chart", height = "300px")
                    
+                 )),
+                 shinyjs::hidden(wellPanel(
+                   id = "mtm_plot_panel",
+                   h2("Portfolio Value"),
+                   plotlyOutput("mtm_plot")
                  ))
                     
                   )
                 )
-                  
-                
-                
-                
-                
               )
-              
-      
-              
-              
-              
-              
-              
-              
         )
     )
   )

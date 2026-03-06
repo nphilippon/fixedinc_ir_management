@@ -450,15 +450,17 @@ function(input, output, session) {
     shinyjs::showElement(id = "rm_cashflow_panel")
     shinyjs::showElement(id = "rm_text_panel")
     shinyjs::hideElement(id = "scenario_panel")
+    shinyjs::hideElement(id = "mtm_plot_panel")
   })
   
   
   observeEvent(input$port_metrics_button, {
     
-    shinyjs::showElement(id = "metric_panel_rm")
+    shinyjs::hideElement(id = "metric_panel_rm")
     shinyjs::hideElement(id = "rm_cashflow_panel")
     shinyjs::showElement(id = "rm_text_panel")
     shinyjs::hideElement(id = "scenario_panel")
+    shinyjs::showElement(id = "mtm_plot_panel")
   })
   
   observeEvent(input$scenario_button, {
@@ -467,7 +469,7 @@ function(input, output, session) {
     shinyjs::showElement(id = "scenario_panel")
     shinyjs::hideElement(id = "metric_panel_rm")
     shinyjs::hideElement(id = "rm_text_panel")
-    
+    shinyjs::showElement(id = "mtm_plot_panel")
     
   })
   
@@ -477,7 +479,6 @@ function(input, output, session) {
     rm_port <- isolate(input$portfolio_list_rm)
     
     temp_table_rm$data <- as.data.frame(updating_list$data[[rm_port]])
-    
     
   })
   
@@ -587,7 +588,6 @@ function(input, output, session) {
   
   observeEvent(input$set_rm_port, {shinyjs::showElement(id = "rm_cashflow_panel")})
   
-  
   output$portfolio_metrics <- renderDataTable({
     
     port_table <- as.data.frame(temp_table_rm$data)
@@ -597,22 +597,7 @@ function(input, output, session) {
     
     prep_table
     
-    
   })
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-    
-
   
   # Bond Metrics tab reactive calculations (waits for user to run)
   bond_metrics_results <- eventReactive(input$run_metrics_calc, {
@@ -647,32 +632,15 @@ function(input, output, session) {
     valueBox(formatC(bond_metrics_results()$gamma_approx, format = "f", digits = 8), "Gamma Approximation")
   })
   
-  
-  #output$build_bond_price <- renderText({
-    
-    #building components of RTL bond function
-  #  ytm_bond <- tidyquant::tq_get(input$build_note,
-  #                               get = "economic.data",
-  #                               from = Sys.Date() - 30)
-  #  
-  #  ytm <- ytm_bond$price %>% tail(1)
-  #  
-  #  coupon <- (input$build_coupon/100)
-  #  
-  #
-  #  RTL::bond(ytm = ytm/100, C = coupon, T2M = input$build_ttm, m = input$build_n, output = "price")
-    
-  #})
-  
   output$forward_curve <- renderPlot({
     
     quotes %>% ggplot2::ggplot(aes(x = maturity, y = rate)) +
-    ggplot2::geom_point(size = 3, color = "limegreen") +
+    ggplot2::geom_point(size = 3, color = "forestgreen") +
     ggplot2::geom_smooth(
       method = "lm",
       formula = y ~ splines::bs(x, knots = c(2, 5, 10), degree = 3),
       se = FALSE,
-      color = "darkred",
+      color = "black",
       linewidth = 1
     ) + 
       ggplot2::scale_x_continuous(breaks = c(round(quotes$maturity),0)) + 
@@ -682,7 +650,38 @@ function(input, output, session) {
       
   })
     
-  
+  output$mtm_plot <- renderPlotly({
+    
+    datedf <- tibble(
+      date = seq(as.Date("2026-01-01"), Sys.Date(), by = "day")
+    )
+    
+    portfolio_table <- temp_table_rm$data
+    
+    portfolio_cashflows <- cpp_get_portfolio_cfs(start_date = as.Date(portfolio_table$start_date),
+                                                 end_date = as.Date(portfolio_table$end_date),
+                                                 coupons = as.numeric(portfolio_table$coupon_rate),
+                                                 periodicities = as.integer(portfolio_table$N),
+                                                 face_values = as.numeric(portfolio_table$Face_Value),
+                                                 quantities = as.numeric(portfolio_table$Quantity))
+    
+    datedf <- tibble(
+      date = seq(as.Date("2026-01-01"), Sys.Date(), by = "day")
+    )
+    
+    mtm_data <- datedf %>% 
+      dplyr::mutate(mtm = purrr::map_dbl(date, ~marking_to_market(.x)
+      ))
+    
+    mtm_plot <- mtm_data %>% plotly::plot_ly(
+      y = ~mtm,
+      x = ~date,
+      type = "scatter",
+      mode = "lines",
+      line = list(color = "forestgreen")
+    )
+    
+  })
   
 }
 

@@ -302,6 +302,87 @@ get_portfolio_metrics_table <- function(portfolio_df){
 
 #--- Cubic Spline interpolation and discount factor calcs below ---#
 #need to know the most recent quotes, since our function can always build the forward curve given the most recent fed quotes
+treasury_yields <- treasury_yields %>% drop_na()
+
+past_discount_factor <- function(data, target_date){
+  
+  target_date <- as.Date(target_date)
+  
+  treasury_yields <- treasury_yields %>% 
+    dplyr::filter(date <= target_date)
+  
+  recentday <- max(treasury_yields$date)
+  
+  if(target_date <= recentday) {recentday = target_date}
+  
+  quotes <- treasury_yields %>% dplyr::filter(date == recentday) %>%
+    dplyr::select(maturity, rate)
+  
+  #here is the model, inspired from fintechII notes
+  spline <- stats::lm(
+    rate ~ splines::bs(maturity, knots = c(2,5,10), degree = 3),
+    quotes
+  )
+  
+  int_discount_factor <- function(data = data) {
+    #use cf = TRUE if your df has a cf column, otherwise you just need a date column
+    df <- data %>% 
+      dplyr::mutate(maturity = as.numeric(date - recentday) / 365.25)
+    
+    new_maturities <- df %>% dplyr::select(maturity)
+    
+    predictions <- spline %>% 
+      stats::predict(
+        newdata = new_maturities,
+        interval = "prediction",
+        level = 0.95
+      )
+    
+    pred <- cbind(new_maturities, predictions) %>% 
+      dplyr::transmute(maturity, rate = fit) #/ 100) 
+    
+    #if(cf == FALSE) {
+    
+    #df <- df %>% dplyr::left_join(pred) %>% 
+    #dplyr::mutate(df = (1 / (1 + rate)^maturity))
+    
+    #} else {
+    
+    df <- df %>% dplyr::left_join(pred) %>% 
+      dplyr::mutate(df = (1 / (1 + rate)^maturity),
+                    pv = cf * df)  
+    #}
+    
+    df
+  }
+  int_discount_factor(data)
+}
+
+
+marking_to_market <- function(target_date){
+  
+  x <- cpp_get_portfolio_cfs(start_dates = as.Date(portfolio_table$start_date),
+                             end_dates = as.Date(portfolio_table$end_date),
+                             coupons = as.numeric(portfolio_table$coupon_rate),
+                             periodicities = as.integer(portfolio_table$N),
+                             face_values = as.numeric(portfolio_table$Face_Value),
+                             quantities = as.numeric(portfolio_table$Quantity)) %>% 
+    tidyr::pivot_wider(names_from = bond_id, values_from = cf) %>% 
+    dplyr::mutate(cf = rowSums(across(-date), na.rm = TRUE)) %>% past_discount_factor(target_date = target_date) %>% 
+    dplyr::arrange((date)) %>% 
+    dplyr::mutate(
+      dummy_future = case_when(target_date >= date ~ 0, .default = 1),
+      dummy_past = (dummy_future - 1)^2,
+      cash_received = dummy_past * cf,
+      pv_noncash = dummy_future * pv,
+    )
+  
+  mtm <- sum(x$cash_received) + sum(x$pv_noncash)
+  
+  mtm
+}
+
+today <- Sys.Date()
 recentday <- max(treasury_yields$date)
 
 quotes <- treasury_yields %>% dplyr::filter(date == recentday) %>%
@@ -315,8 +396,8 @@ spline <- stats::lm(
 #tested with fake data frame
 fakedf <- data.frame(date = as.Date(c("2026-06-01", "2028-01-01", "2032-01-01", "2040-08-01")), cf = c(1200, 100, 10000, 10000))
 
-discount_factor <- function(data, cf = FALSE) {
-  #use cf = TRUE if your df has a cf column, otherwise you just need a date column
+discount_factor <- function(data) {
+  #must input the bond cash flows in a data frame containing dates and cash flows ie) data
   df <- data %>% 
     dplyr::mutate(maturity = as.numeric(date - recentday) / 365.25)
   
@@ -330,23 +411,11 @@ discount_factor <- function(data, cf = FALSE) {
     )
   
   pred <- cbind(new_maturities, predictions) %>% 
-    dplyr::transmute(maturity, yield = fit / 100) 
+    dplyr::transmute(maturity, rate = fit / 100) 
   
-  if(cf == FALSE) {
-    
-    df <- df %>% dplyr::left_join(pred) %>% 
-      dplyr::mutate(df = (1 / (1 + yield)^maturity))
-    
-  } else {
-    
-    df <- df %>% dplyr::left_join(pred) %>% 
-      dplyr::mutate(df = (1 / (1 + yield)^maturity),
-                    pv = cf * df)  
-  }
+  df <- df %>% dplyr::left_join(pred) %>% 
+    dplyr::mutate(df = (1 / (1 + rate)^maturity),
+                  pv = cf * df) 
   
   df
 }
-#here is the output from the test
-#test_discount_factor <- discount_factor(fakedf)
-
-#--- end of rate interpolation via cubic spline and discount factor formula/calculator function work ---#

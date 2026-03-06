@@ -250,15 +250,36 @@ save_portfolio <- function(name, table){
 }
 
 
-setup_yield_table <- function(df){
+get_portfolio_metrics_table <- function(portfolio_df){
   
-  df %>% 
-    dplyr::mutate(bond_id = row_number()) %>% 
-    dplyr::group_by(bond_id) %>% 
-    tidyr::expand(Date = seq.Date(from = as.Date(start_date), to = as.Date(end_date), by = "day")) %>% 
-    dplyr::left_join(df, by = join_by(bond_id)) %>% 
-    dplyr::mutate(TTM = get_bond_ttm(Date, as.Date(end_date)))
-    
+  
+  portfolio_df <- portfolio_df %>% 
+    dplyr::mutate(
+      bond_id = row_number(),
+      date = map2(start_dates, end_dates, ~seq.Date(.x, .y, by = "day"))) %>% 
+    unnest(date) %>% 
+    dplyr::mutate(
+      ttm = as.numeric(get_bond_ttm(date, end_dates))
+    ) %>% 
+    select(bond_id, date, ttm, c, FV, quantity)
+  
+  portfolio_dates <- portfolio_df %>% 
+    distinct(date)
+  
+  portfolio_discount_factors <- discount_factor(portfolio_dates) %>% 
+    select(date, yield)
+  
+  portfolio_df <- left_join(portfolio_df, portfolio_discount_factors, by = "date")
+
+  portfolio_metrics <- cpp_get_portfolio_metrics(ttm = portfolio_df$ttm,
+                                                 yield = portfolio_df$yield,
+                                                 c = portfolio_df$c,
+                                                 FV = portfolio_df$FV)
+  
+  output_df <- portfolio_df %>% 
+    bind_cols(portfolio_metrics)
+  
+  return(output_df)
 }
 
 
@@ -312,11 +333,12 @@ discount_factor <- function(data) {
   
   df <- df %>% dplyr::left_join(pred) %>% 
     dplyr::mutate(df = (1 / (1 + rate)^maturity),
-                  pv = cf * df) 
+                  yield = rate * 100)#,
+                  # pv = cf * df) 
   
   df
 }
 #here is the output from the test
-discount_factor(fakedf)
+test_discount_factor <- discount_factor(exp_output)
 
 #--- end of rate interpolation via cubic spline and discount factor formula/calculator function work ---#

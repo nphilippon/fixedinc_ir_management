@@ -14,12 +14,16 @@ ENV DEBIAN_FRONTEND=noninteractive
 # libcurl4-gnutls-dev - Client side URL transfer library (https://packages.debian.org/trixie/libcurl4-gnutls-dev)
 # libxml2-dev - GNOME XML Library (https://packages.debian.org/sid/libxml2-dev)
 
+<<<<<<< HEAD
 RUN apt-get update && apt install -y -no-install-recommends \
     git \
+=======
+RUN apt-get update && apt-get install -y --no-install-recommends \
+>>>>>>> refs/remotes/origin/main
     libssl-dev \
     libcurl4-gnutls-dev \
     libxml2-dev \
-    && apt autoremove -y
+    && apt-get autoremove -y
 
 RUN R -q -e 'if (!requireNamespace("devtools", quietly=TRUE)) install.packages("devtools", repos="https://cloud.r-project.org")' && \
     R -q -e 'devtools::install_github("risktoollib/RTL", upgrade="never")' && \

@@ -251,6 +251,10 @@ dashboardPage(
                 column(
                   8,
                   fluidRow(
+                    plotlyOutput("portfolio_duration_chart", height = "300px"),
+                    plotlyOutput("portfolio_convexity_chart", height = "300px")# just here for now
+                  ),
+                  fluidRow(
                     align = "center",
                     box(
                       title = "Portfolio Table",

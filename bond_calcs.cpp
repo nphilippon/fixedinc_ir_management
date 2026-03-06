@@ -180,7 +180,7 @@ DataFrame cpp_get_portfolio_cfs(DateVector start_dates, DateVector end_dates,
     double coupon_pmt = (coupons[i] / periodicities[i]) * face_values[i] * quantities[i]; // Calc coupon payment
     double final_pmt = coupon_pmt + (face_values[i] * quantities[i]); // Calc final payment (coupon + FV)
     
-    int months_between = 12 / periodicities[i]; 
+    // int months_between = 12 / periodicities[i]; 
     int days_between = std::round(365.25 / periodicities[i]); 
     // Note: months_between is unused rn because we are just adding approx dates, but keeping it
     // for when I figure out how to add actual exact dates

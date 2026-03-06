@@ -296,6 +296,7 @@ get_bond_ttm <- function(settlement_date, maturity_date) {
 # Testing functions
 test_bond_ttm <- get_bond_ttm(settlement_date = "2016-01-01", maturity_date = "2026-01-01")
 test_bond_metrics <- cpp_get_bond_metrics(ttm = 10, yield = 0.05, c = 0.05)
+
 # test_bond_cf <- bond_cf(start_date = "2020-01-01", end_date = "2026-01-01", ytm = 0.04, c = 0.05, FV = 100)
 
 treasury_yields_metrics <- get_yield_metrics(treasury_yields)   # <----  THIS TAKES FOREVER, until we implement it as a .cpp

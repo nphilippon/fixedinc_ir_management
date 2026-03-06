@@ -154,11 +154,13 @@ function(input, output, session) {
   
   #Portfolio Builder Section Below
   
-  #Initializing temp table
+  #Initializing temp tables
   
-  temp_table <- reactiveValues(data = NULL)
+  temp_table <- reactiveValues(data = NULL) #For the portfolio builder
   
-  output$temp_table <- renderDT({init_table})
+  temp_table_rm <- reactiveValues(data = NULL) #For the risk manager
+  
+ 
   
   
   
@@ -437,7 +439,69 @@ function(input, output, session) {
   })
   
   
+  #Risk manager inputs well panels:
   
+  shinyjs::showElement(id = "rm_text_panel")
+  
+  
+  observeEvent(input$VaR_button, {
+    
+    shinyjs::hideElement(id = "rm_text_panel")
+    shinyjs::hideElement(id = "stress_inputs")
+    shinyjs::hideElement(id = "other_panel")
+    shinyjs::showElement(id = "var_inputs")
+    
+  })
+  
+  
+  observeEvent(input$stress_rm_button, {
+    
+    shinyjs::hideElement(id = "rm_text_panel")
+    shinyjs::showElement(id = "stress_inputs")
+    shinyjs::hideElement(id = "other_panel")
+    shinyjs::hideElement(id = "var_inputs")
+    
+  })
+  
+  observeEvent(input$button_3, {
+    
+    shinyjs::hideElement(id = "rm_text_panel")
+    shinyjs::hideElement(id = "stress_inputs")
+    shinyjs::showElement(id = "other_panel")
+    shinyjs::hideElement(id = "var_inputs")
+    
+    
+  })
+  
+  
+  observeEvent(input$set_rm_port, {
+    
+    rm_port <- isolate(input$set_rm_port)
+    
+    temp_table_rm$data <- as.data.frame(updating_list$data[[rm_port]])
+    
+  })
+  
+ 
+  output$rm_temp_table <- renderDataTable(
+    
+    temp_table_rm$data,
+    options = list(scrollX = TRUE)
+    
+  )
+  
+  
+  
+  #position_bar_chart <- reactive({
+  #  
+  # positions <- as.data.frame(temp_table_rm$data)
+  # 
+  # arrange_choice <- isolate() 
+  # 
+  # positions %>% 
+  #   dplyr::arrange()
+  #  
+  #})
   
   
   

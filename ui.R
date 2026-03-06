@@ -153,11 +153,7 @@ dashboardPage(
               )
       ),
       tabItem(tabName = "risk_manager",
-              
-              
-              
-              
-              
+              theme = bs_theme(),
               
               
                 fluidRow(
@@ -171,6 +167,8 @@ dashboardPage(
                       solidHeader = T,
                       width = 12,
                       uiOutput("portfolio_list_rm"), #will try to use same logic as port builder,
+                      actionButton("set_rm_port",
+                                   "Set Portfolio"),
                       style = "background: rgb(224,224,224)"
                     )
                   ),
@@ -185,50 +183,85 @@ dashboardPage(
                   column(
                     4,
                     fluidRow(
-                      column(
-                        6,
                         actionButton("VaR_button",
                                      "VaR",
-                                     style = "color: #FFFFFF; background-color: #006633; border-color: #000000",
-                                     width = "100%")
-                      ),
-                      column(
-                        6,
-                        actionButton("stress_rm__button",
+                                     style = "color: #FFFFFF; background-color: #08415C; border-color: #000000; display: inline-block;",
+                                     width = "100%"),
+                      
+                        actionButton("stress_rm_button",
                                      "Stress Testing",
-                                     style = "color: #FFFFFF;background-color: #330066; border-color: #000000",
-                                     width = "100%")
-                      ),
+                                     style = "color: #FFFFFF;background-color: #CC2936; border-color: #000000; display: inline-block;",
+                                     width = "100%"),
+                    
+                        actionButton("button_3",
+                                     "Something Else",
+                                      style = "color: #FFFFFF;background-color: #6B818C; border-color: #000000; display: inline-block;",
+                                      width = "100%")
                     ),
                     fluidRow(
-                    #Replacing all these with well panels that will be shown with a click of each button above.
-                       box(
-                         title = "VaR",
-                         status = "primary",
-                         style = "background: rgb(224,224,224)",
-                         solidHeader = T,
+                       shinyjs::hidden(wellPanel(
+                           id = "var_inputs",
+                           h2("Value At Risk",
+                              style =  "font-size: 18px; font-weight: bold;"),
+                           style = "background: rgb(224,224,225)", #Can make colors nicer
+                           width = 12,
+                           numericInput("confidence_rm",
+                                        "Confidence ($)",
+                                        value = 5,
+                                        min = 0,
+                                        max = 100,
+                                        step = 2.5)
+                       )),
+                       shinyjs::hidden(wellPanel(
+                         id = "stress_inputs",
+                         h2("Stress Test",
+                            style = "font-size: 18px; font-weight: bold;"),
+                         style = "background: rgb(224,224,224);",
                          width = 12,
-                         collapsible = TRUE,
-                         numericInput("confidence_rm",
-                                      "Confidence ($)",
-                                      value = 5,
-                                      min = 0,
-                                      max = 100,
-                                      step = 2.5)
-                       ),
-                       box(
-                         title = "Stress Test",
-                         status = "primary",
-                         style = "background: rgb(224,224,224)",
-                         solidHeader = T,
-                         width = 12,
-                         collapsible = TRUE,
                          numericInput("basis_ch_rm",
                                       "Basis Point Change",
                                       value = 0,
                                       step = 1)
-                       )
+                       )),
+                       shinyjs::hidden(wellPanel(
+                         id = "other_panel",
+                         h2("TITLE",
+                            style = "font-size: 18px; font-weight: bold;"),
+                         style = "background: rgb(224,224,224);",
+                         width = 12,
+                         numericInput("input_3",
+                                      "TITLE",
+                                      value = 0,
+                                      step = 1)
+          
+                       )),
+                       shinyjs::hidden(wellPanel(
+                         id = "rm_text_panel",
+                         h2("TITLE",
+                            style = "font-size: 18px; font-weight: bold;"),
+                         p("Enter information here to inform users about the functions of this page"),
+                         width = 12,
+                         style = "background: rgb(224,224,224);"
+                        
+                       ))
                     )
+                ),
+                column(
+                  8,
+                  fluidRow(
+                    align = "center",
+                    box(
+                      title = "Portfolio Table",
+                      status = "primary",
+                      width = NULL,
+                      DTOutput("rm_temp_table",
+                               height = NULL,
+                               width = NULL),
+                      collapsible = TRUE,
+                      solidHeader = TRUE
+                      
+                    )
+                  )
                 )
                   
                 

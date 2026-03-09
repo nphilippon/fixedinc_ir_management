@@ -46,6 +46,7 @@ get_treasury_data <- function(symbols, names, maturities, from = "1992-01-02", d
   # dim: Dimension, either "long" or "wide", default is long
   
   output <- tq_get(symbols, get = "economic.data", from = from) %>%
+    stats::na.omit() %>%
     dplyr::mutate(
       maturity = maturities[match(symbol, symbols)],
       rate = price / 100) %>% 
@@ -290,18 +291,18 @@ get_portfolio_metrics_table <- function(portfolio_df){
 #need to know the most recent quotes, since our function can always build the forward curve given the most recent fed quotes
 treasury_yields <- treasury_yields %>% drop_na()
 
-past_discount_factor <- function(data, target_date){
-  
+past_discount_factor <- function(data, target_date, yields){
+
   target_date <- as.Date(target_date)
   
-  treasury_yields <- treasury_yields %>% 
+  yields <- yields %>% 
     dplyr::filter(date <= target_date)
   
-  recentday <- max(treasury_yields$date)
+  recentday <- max(yields$date)
   
   if(target_date <= recentday) {recentday = target_date}
   
-  quotes <- treasury_yields %>% dplyr::filter(date == recentday) %>%
+  quotes <- yields %>% dplyr::filter(date == recentday) %>%
     dplyr::select(maturity, rate)
   
   #here is the model, inspired from fintechII notes
@@ -310,51 +311,46 @@ past_discount_factor <- function(data, target_date){
     quotes
   )
   
-  int_discount_factor <- function(data = data) {
-    #use cf = TRUE if your df has a cf column, otherwise you just need a date column
-    df <- data %>% 
-      dplyr::mutate(maturity = as.numeric(date - recentday) / 365.25)
-    
-    new_maturities <- df %>% dplyr::select(maturity)
-    
-    predictions <- spline %>% 
-      stats::predict(
-        newdata = new_maturities,
-        interval = "prediction",
-        level = 0.95
-      )
-    
-    pred <- cbind(new_maturities, predictions) %>% 
-      dplyr::transmute(maturity, rate = fit) #/ 100) 
-    
-    #if(cf == FALSE) {
-    
-    #df <- df %>% dplyr::left_join(pred) %>% 
-    #dplyr::mutate(df = (1 / (1 + rate)^maturity))
-    
-    #} else {
-    
-    df <- df %>% dplyr::left_join(pred) %>% 
-      dplyr::mutate(df = (1 / (1 + rate)^maturity),
-                    pv = cf * df)  
-    #}
-    
-    return(df)
-  }
-  return(int_discount_factor(data))
+  int_discount <- int_discount_factor(data, spline, recentday)
+  
+  return(int_discount)
 }
 
+int_discount_factor <- function(data, spline, recentday) {
+  #use cf = TRUE if your df has a cf column, otherwise you just need a date column
+  df <- data %>% 
+    dplyr::mutate(maturity = as.numeric(date - recentday) / 365.25)
+  
+  new_maturities <- df %>% dplyr::select(maturity)
+  
+  predictions <- spline %>% 
+    stats::predict(
+      newdata = new_maturities,
+      interval = "prediction",
+      level = 0.95
+    )
+  
+  pred <- cbind(new_maturities, predictions) %>% 
+    dplyr::transmute(maturity, rate = fit)
+  
+  df <- df %>% dplyr::left_join(pred) %>% 
+    dplyr::mutate(df = (1 / (1 + rate)^maturity),
+                  pv = cf * df)  
+  
+  return(df)
+}
 
-marking_to_market <- function(target_date, portfolio_table){
+marking_to_market <- function(target_date, portfolio_table, yields = treasury_yields){
   
   x <- cpp_get_portfolio_cfs(start_dates = as.Date(portfolio_table$start_date),
                              end_dates = as.Date(portfolio_table$end_date),
                              coupons = as.numeric(portfolio_table$coupon_rate),
                              periodicities = as.integer(portfolio_table$N),
                              face_values = as.numeric(portfolio_table$Face_Value),
-                             quantities = as.numeric(portfolio_table$Quantity)) %>% 
-    tidyr::pivot_wider(names_from = bond_id, values_from = cf) %>% 
-    dplyr::mutate(cf = rowSums(across(-date), na.rm = TRUE)) %>% past_discount_factor(target_date = target_date) %>% 
+                             quantities = as.numeric(portfolio_table$Quantity))
+  
+  x <- x %>% tidyr::pivot_wider(names_from = bond_id, values_from = cf) %>% 
+    dplyr::mutate(cf = rowSums(across(-date), na.rm = TRUE)) %>% past_discount_factor(., target_date, yields) %>% 
     dplyr::arrange((date)) %>% 
     dplyr::mutate(
       dummy_future = case_when(target_date >= date ~ 0, .default = 1),

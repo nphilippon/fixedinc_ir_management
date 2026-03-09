@@ -685,7 +685,7 @@ function(input, output, session) {
                                                  quantities = as.numeric(portfolio_table$Quantity))
     
     datedf <- tibble(
-      date = seq(as.Date("2026-01-01"), Sys.Date(), by = "day")
+      date = seq(as.Date("2022-01-01"), Sys.Date(), by = "day")
     )
     
     mtm_data <- datedf %>% 
